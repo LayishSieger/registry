@@ -7,7 +7,7 @@
       "name": "question-batch",
       "type": "registry:block",
       "title": "Question Batch",
-      "description": "A questionnaire wrap. Auto-advance is per slide. Optional review and cancel.",
+      "description": "A questionnaire wrap with HITL onResult for AI SDK addToolOutput.",
       "registryDependencies": ["questionnaire", "card", "button", "popover"],
       "files": [
         {

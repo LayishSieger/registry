@@ -1,6 +1,7 @@
 import { QuestionBatchAutoAdvancePreview } from "@/components/question-batch-preview"
 import { QuestionBatchCancelPreview } from "@/components/question-batch-preview"
 import { QuestionBatchDefaultPreview } from "@/components/question-batch-preview"
+import { QuestionBatchHitlPreview } from "@/components/question-batch-preview"
 import { QuestionBatchReviewPreview } from "@/components/question-batch-preview"
 import { RegistryExample } from "@/components/registry-example"
 
@@ -38,6 +39,12 @@ export default function Home() {
           description="cancel on the batch. Confirm before discarding answers."
         >
           <QuestionBatchCancelPreview />
+        </RegistryExample>
+        <RegistryExample
+          title="AI SDK HITL"
+          description="onResult is the tool output. Host passes it to addToolOutput."
+        >
+          <QuestionBatchHitlPreview />
         </RegistryExample>
       </main>
     </div>

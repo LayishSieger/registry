@@ -3,7 +3,10 @@
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
-import type { QuestionBatchItem } from "@/registry/new-york/blocks/question-batch/question-batch"
+import type {
+  QuestionBatchItem,
+  QuestionBatchResult,
+} from "@/registry/new-york/blocks/question-batch/question-batch"
 import { QuestionBatch } from "@/registry/new-york/blocks/question-batch/question-batch"
 
 const defaultItems: QuestionBatchItem[] = [
@@ -102,6 +105,13 @@ const reviewItems: QuestionBatchItem[] = [
   },
 ]
 
+function summarizeResult(result: QuestionBatchResult) {
+  if (result.status === "canceled") return "canceled"
+  return result.answers
+    .map((answer) => `${answer.name}: ${answer.label}`)
+    .join(" · ")
+}
+
 function PreviewBatch({
   items,
   review = false,
@@ -112,18 +122,6 @@ function PreviewBatch({
   cancel?: boolean
 }) {
   const [submitted, setSubmitted] = React.useState<string | null>(null)
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const data = new FormData(event.currentTarget)
-    const parts = items.map((item) => {
-      const value = item.multiple
-        ? data.getAll(item.name).join(", ") || "—"
-        : data.get(item.name)?.toString() || "Skipped"
-      return `${item.name}: ${value}`
-    })
-    setSubmitted(parts.join(" · "))
-  }
 
   if (submitted) {
     return (
@@ -141,8 +139,7 @@ function PreviewBatch({
       items={items}
       review={review}
       cancel={cancel}
-      onCancel={cancel ? () => setSubmitted("Canceled") : undefined}
-      onSubmit={handleSubmit}
+      onResult={(result) => setSubmitted(summarizeResult(result))}
     />
   )
 }
@@ -161,4 +158,66 @@ export function QuestionBatchReviewPreview() {
 
 export function QuestionBatchCancelPreview() {
   return <PreviewBatch items={reviewItems} review cancel />
+}
+
+const HITL_SNIPPET = `const { addToolOutput } = useChat({
+  sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+})
+
+<QuestionBatch
+  cancel
+  review
+  items={part.input.items}
+  onResult={(output) =>
+    addToolOutput({
+      tool: "askQuestions",
+      toolCallId: part.toolCallId,
+      output,
+    })
+  }
+/>`
+
+export function QuestionBatchHitlPreview() {
+  const [result, setResult] = React.useState<QuestionBatchResult | null>(null)
+
+  if (result) {
+    const payload = {
+      tool: "askQuestions",
+      toolCallId: "call_askQuestions_1",
+      output: result,
+    }
+
+    return (
+      <div className="flex w-full flex-col gap-4">
+        <p className="text-sm text-muted-foreground">
+          This is what the host sends. Not a user message — it resolves the
+          paused tool and the chat route continues.
+        </p>
+        <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs">
+          {`addToolOutput(${JSON.stringify(payload, null, 2)})`}
+        </pre>
+        <Button type="button" variant="outline" onClick={() => setResult(null)}>
+          Replay
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-6">
+      <p className="text-sm text-muted-foreground">
+        Agent called askQuestions and is waiting. Submit or cancel fills the
+        tool result.
+      </p>
+      <QuestionBatch
+        cancel
+        review
+        items={reviewItems}
+        onResult={setResult}
+      />
+      <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs">
+        {HITL_SNIPPET}
+      </pre>
+    </div>
+  )
 }

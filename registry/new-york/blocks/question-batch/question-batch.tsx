@@ -81,10 +81,26 @@ export type QuestionBatchLabels = {
   cancelKeep?: string
 }
 
+export type QuestionBatchAnswer = {
+  name: string
+  title: string
+  value: string | string[] | null
+  label: string
+}
+
+export type QuestionBatchResult =
+  | { status: "submitted"; answers: QuestionBatchAnswer[] }
+  | { status: "canceled" }
+
 export type QuestionBatchProps = {
   items: QuestionBatchItem[]
   className?: string
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void
+  /**
+   * HITL-shaped result. Pass this straight to `addToolOutput({ output })`.
+   * Submit → `{ status: "submitted", answers }`. Cancel → `{ status: "canceled" }`.
+   */
+  onResult?: (result: QuestionBatchResult) => void
   /** After the last question, show a review step before submit. Default false. */
   review?: boolean
   /** Show a confirm-to-cancel control. Default false. */
@@ -98,12 +114,6 @@ export type QuestionBatchProps = {
   onItemChange?: (item: string) => void
 }
 
-type ReviewAnswer = {
-  name: string
-  title: string
-  label: string
-}
-
 function itemAutoAdvances(item: QuestionBatchItem) {
   if (item.multiple) return false
   return item.autoAdvance === true
@@ -112,30 +122,46 @@ function itemAutoAdvances(item: QuestionBatchItem) {
 function readAnswers(
   form: HTMLFormElement,
   items: QuestionBatchItem[],
-): ReviewAnswer[] {
+): QuestionBatchAnswer[] {
   const data = new FormData(form)
 
   return items.map((item) => {
     if (item.multiple) {
       const values = data.getAll(item.name).map(String).filter(Boolean)
       if (values.length === 0) {
-        return { name: item.name, title: item.title, label: "Skipped" }
+        return {
+          name: item.name,
+          title: item.title,
+          value: null,
+          label: "Skipped",
+        }
       }
       const labels = values.map(
         (value) =>
           item.choices.find((choice) => choice.value === value)?.label ?? value,
       )
-      return { name: item.name, title: item.title, label: labels.join(", ") }
+      return {
+        name: item.name,
+        title: item.title,
+        value: values,
+        label: labels.join(", "),
+      }
     }
 
     const value = data.get(item.name)?.toString() ?? ""
     if (!value) {
-      return { name: item.name, title: item.title, label: "Skipped" }
+      return {
+        name: item.name,
+        title: item.title,
+        value: null,
+        label: "Skipped",
+      }
     }
     const choice = item.choices.find((entry) => entry.value === value)
     return {
       name: item.name,
       title: item.title,
+      value,
       label: choice?.label ?? value,
     }
   })
@@ -238,6 +264,7 @@ export function QuestionBatch({
   items,
   className,
   onSubmit,
+  onResult,
   review = false,
   cancel = false,
   onCancel,
@@ -252,7 +279,9 @@ export function QuestionBatch({
   const lastName = items.at(-1)?.name
   const formRef = React.useRef<HTMLFormElement>(null)
   const [phase, setPhase] = React.useState<"questions" | "review">("questions")
-  const [reviewAnswers, setReviewAnswers] = React.useState<ReviewAnswer[]>([])
+  const [reviewAnswers, setReviewAnswers] = React.useState<
+    QuestionBatchAnswer[]
+  >([])
   const [uncontrolledItem, setUncontrolledItem] = React.useState(
     () => defaultItem ?? firstName,
   )
@@ -298,6 +327,11 @@ export function QuestionBatch({
     if (review) enterReview()
   }
 
+  function emitCancel() {
+    onResult?.({ status: "canceled" })
+    onCancel?.()
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     // Skip on the last item calls form.requestSubmit(). Intercept that
     // while questions are still open so review is not bypassed.
@@ -306,6 +340,11 @@ export function QuestionBatch({
       enterReview()
       return
     }
+    event.preventDefault()
+    onResult?.({
+      status: "submitted",
+      answers: readAnswers(event.currentTarget, items),
+    })
     onSubmit?.(event)
   }
 
@@ -367,7 +406,7 @@ export function QuestionBatch({
                       {showCancel ? (
                         <CancelBatchButton
                           labels={labels}
-                          onCancel={onCancel}
+                          onCancel={emitCancel}
                         />
                       ) : null}
                     </div>
@@ -417,7 +456,7 @@ export function QuestionBatch({
               <CardDescription>Submit this batch?</CardDescription>
               {showCancel ? (
                 <CardAction>
-                  <CancelBatchButton labels={labels} onCancel={onCancel} />
+                  <CancelBatchButton labels={labels} onCancel={emitCancel} />
                 </CardAction>
               ) : null}
             </CardHeader>
