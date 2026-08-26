@@ -1,8 +1,19 @@
 "use client"
 
 import * as React from "react"
-import { ArrowLeftIcon } from "lucide-react"
+import { ArrowLeftIcon, XIcon } from "lucide-react"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -66,6 +77,11 @@ export type QuestionBatchLabels = {
   skip?: string
   submit?: string
   review?: string
+  cancel?: string
+  cancelTitle?: string
+  cancelDescription?: string
+  cancelConfirm?: string
+  cancelKeep?: string
 }
 
 export type QuestionBatchProps = {
@@ -74,6 +90,9 @@ export type QuestionBatchProps = {
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void
   /** After the last question, show a review step before submit. Default false. */
   review?: boolean
+  /** Show a confirm-to-cancel control. Default false. */
+  cancel?: boolean
+  onCancel?: () => void
   autoAdvanceDelay?: number
   shortcuts?: "numbers" | "letters" | false
   labels?: QuestionBatchLabels
@@ -162,11 +181,55 @@ function useAutoAdvance(delay: number) {
   return { pendingKey, schedule, clear }
 }
 
+function CancelBatchButton({
+  labels,
+  onCancel,
+}: {
+  labels?: QuestionBatchLabels
+  onCancel?: () => void
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={labels?.cancel ?? "Cancel batch"}
+        >
+          <XIcon />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {labels?.cancelTitle ?? "Cancel this batch?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {labels?.cancelDescription ??
+              "Your current answers in this batch will be discarded."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            {labels?.cancelKeep ?? "Keep answering"}
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => onCancel?.()}>
+            {labels?.cancelConfirm ?? "Cancel batch"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 export function QuestionBatch({
   items,
   className,
   onSubmit,
   review = false,
+  cancel = false,
+  onCancel,
   autoAdvanceDelay = DEFAULT_AUTO_ADVANCE_DELAY_MS,
   shortcuts = "numbers",
   labels,
@@ -243,6 +306,7 @@ export function QuestionBatch({
 
   const showReviewNext =
     review && phase === "questions" && activeItem === lastName
+  const showCancel = cancel
 
   return (
     <Questionnaire
@@ -281,13 +345,21 @@ export function QuestionBatch({
                     </QuestionnaireDescription>
                   ) : null}
                   <CardAction>
-                    <QuestionnaireProgress
-                      render={(props, state) => (
-                        <div {...props}>
-                          Question {state.current} of {state.total}
-                        </div>
-                      )}
-                    />
+                    <div className="flex items-center gap-2">
+                      <QuestionnaireProgress
+                        render={(props, state) => (
+                          <div {...props}>
+                            Question {state.current} of {state.total}
+                          </div>
+                        )}
+                      />
+                      {showCancel ? (
+                        <CancelBatchButton
+                          labels={labels}
+                          onCancel={onCancel}
+                        />
+                      ) : null}
+                    </div>
                   </CardAction>
                 </CardHeader>
                 <CardContent>
@@ -332,6 +404,11 @@ export function QuestionBatch({
             <CardHeader>
               <CardTitle>{labels?.review ?? "Review"}</CardTitle>
               <CardDescription>Submit this batch?</CardDescription>
+              {showCancel ? (
+                <CardAction>
+                  <CancelBatchButton labels={labels} onCancel={onCancel} />
+                </CardAction>
+              ) : null}
             </CardHeader>
             <CardContent>
               <ul className="flex flex-col gap-4">

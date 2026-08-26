@@ -7,8 +7,8 @@
       "name": "question-batch",
       "type": "registry:block",
       "title": "Question Batch",
-      "description": "A questionnaire wrap. Auto-advance is per slide. Optional review before submit.",
-      "registryDependencies": ["questionnaire", "card", "button"],
+      "description": "A questionnaire wrap. Auto-advance is per slide. Optional review and cancel.",
+      "registryDependencies": ["questionnaire", "card", "button", "alert-dialog"],
       "files": [
         {
           "path": "registry/new-york/blocks/question-batch/question-batch.tsx",

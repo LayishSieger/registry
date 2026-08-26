@@ -105,9 +105,11 @@ const reviewItems: QuestionBatchItem[] = [
 function PreviewBatch({
   items,
   review = false,
+  cancel = false,
 }: {
   items: QuestionBatchItem[]
   review?: boolean
+  cancel?: boolean
 }) {
   const [submitted, setSubmitted] = React.useState<string | null>(null)
 
@@ -135,7 +137,13 @@ function PreviewBatch({
   }
 
   return (
-    <QuestionBatch items={items} review={review} onSubmit={handleSubmit} />
+    <QuestionBatch
+      items={items}
+      review={review}
+      cancel={cancel}
+      onCancel={cancel ? () => setSubmitted("Canceled") : undefined}
+      onSubmit={handleSubmit}
+    />
   )
 }
 
@@ -149,4 +157,8 @@ export function QuestionBatchAutoAdvancePreview() {
 
 export function QuestionBatchReviewPreview() {
   return <PreviewBatch items={reviewItems} review />
+}
+
+export function QuestionBatchCancelPreview() {
+  return <PreviewBatch items={reviewItems} review cancel />
 }

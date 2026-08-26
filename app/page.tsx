@@ -1,4 +1,5 @@
 import { QuestionBatchAutoAdvancePreview } from "@/components/question-batch-preview"
+import { QuestionBatchCancelPreview } from "@/components/question-batch-preview"
 import { QuestionBatchDefaultPreview } from "@/components/question-batch-preview"
 import { QuestionBatchReviewPreview } from "@/components/question-batch-preview"
 import { RegistryExample } from "@/components/registry-example"
@@ -31,6 +32,12 @@ export default function Home() {
           description="review on the batch. Last-slide autoAdvance goes to review, not submit."
         >
           <QuestionBatchReviewPreview />
+        </RegistryExample>
+        <RegistryExample
+          title="Cancel"
+          description="cancel on the batch. Confirm before discarding answers."
+        >
+          <QuestionBatchCancelPreview />
         </RegistryExample>
       </main>
     </div>
