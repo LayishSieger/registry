@@ -1,69 +1,30 @@
-import * as React from "react"
-import { OpenInV0Button } from "@/components/open-in-v0-button"
-import { HelloWorld } from "@/registry/new-york/blocks/hello-world/hello-world"
-import { ExampleForm } from "@/registry/new-york/blocks/example-form/example-form"
-import PokemonPage from "@/registry/new-york/blocks/complex-component/page"
-import { ExampleCard } from "@/registry/new-york/blocks/example-with-css/example-card"
-// This page displays items from the custom registry.
-// You are free to implement this with your own design as needed.
+import { QuestionBatchAutoAdvancePreview } from "@/components/question-batch-preview"
+import { QuestionBatchDefaultPreview } from "@/components/question-batch-preview"
+import { RegistryExample } from "@/components/registry-example"
 
 export default function Home() {
   return (
-    <div className="max-w-3xl mx-auto flex flex-col min-h-svh px-4 py-8 gap-8">
+    <div className="mx-auto flex min-h-svh max-w-3xl flex-col gap-8 px-4 py-8">
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">Custom Registry</h1>
+        <h1 className="text-3xl font-bold tracking-tight">layish</h1>
         <p className="text-muted-foreground">
-          A custom registry for distributing code using shadcn.
+          A registry of composed blocks on top of shadcn.
         </p>
       </header>
-      <main className="flex flex-col flex-1 gap-8">
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A simple hello world component
-            </h2>
-            <OpenInV0Button name="hello-world" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[400px] relative">
-            <HelloWorld />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A contact form with Zod validation.
-            </h2>
-            <OpenInV0Button name="example-form" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[500px] relative">
-            <ExampleForm />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A complex component showing hooks, libs and components.
-            </h2>
-            <OpenInV0Button name="complex-component" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[400px] relative">
-            <PokemonPage />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A login form with a CSS file.
-            </h2>
-            <OpenInV0Button name="example-with-css" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[400px] relative">
-            <ExampleCard />
-          </div>
-        </div>
+      <main className="flex flex-1 flex-col gap-8">
+        <RegistryExample
+          name="question-batch"
+          title="Default"
+          description="question-batch — Next and Submit only."
+        >
+          <QuestionBatchDefaultPreview />
+        </RegistryExample>
+        <RegistryExample
+          title="Auto-advance"
+          description="autoAdvance is per slide. Off for multiple choice and for the last slide."
+        >
+          <QuestionBatchAutoAdvancePreview />
+        </RegistryExample>
       </main>
     </div>
   )
