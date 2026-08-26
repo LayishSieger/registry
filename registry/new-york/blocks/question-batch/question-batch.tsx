@@ -3,17 +3,6 @@
 import * as React from "react"
 import { ArrowLeftIcon, XIcon } from "lucide-react"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -40,6 +29,14 @@ import {
   QuestionnaireSubmit,
   QuestionnaireTitle,
 } from "@/components/ui/questionnaire"
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_AUTO_ADVANCE_DELAY_MS = 380
@@ -188,9 +185,11 @@ function CancelBatchButton({
   labels?: QuestionBatchLabels
   onCancel?: () => void
 }) {
+  const [open, setOpen] = React.useState(false)
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
           type="button"
           variant="ghost"
@@ -199,27 +198,39 @@ function CancelBatchButton({
         >
           <XIcon />
         </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent size="sm">
-        <AlertDialogHeader>
-          <AlertDialogTitle>
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={8} className="w-72">
+        <PopoverHeader>
+          <PopoverTitle>
             {labels?.cancelTitle ?? "Cancel this batch?"}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
+          </PopoverTitle>
+          <PopoverDescription>
             {labels?.cancelDescription ??
               "Your current answers in this batch will be discarded."}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>
+          </PopoverDescription>
+        </PopoverHeader>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setOpen(false)}
+          >
             {labels?.cancelKeep ?? "Keep answering"}
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={() => onCancel?.()}>
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              setOpen(false)
+              onCancel?.()
+            }}
+          >
             {labels?.cancelConfirm ?? "Cancel batch"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
