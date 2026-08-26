@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import type { QuestionnaireItemStatus } from "@shadcn/react/questionnaire"
 import { ArrowLeftIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -282,6 +283,9 @@ export function QuestionBatch({
   const [reviewAnswers, setReviewAnswers] = React.useState<
     QuestionBatchAnswer[]
   >([])
+  const [itemStatus, setItemStatus] = React.useState<
+    Partial<Record<string, QuestionnaireItemStatus>>
+  >({})
   const [uncontrolledItem, setUncontrolledItem] = React.useState(
     () => defaultItem ?? firstName,
   )
@@ -356,6 +360,12 @@ export function QuestionBatch({
 
   const showReviewNext =
     review && phase === "questions" && activeItem === lastName
+  const activeSlide = items.find((item) => item.name === activeItem)
+  const hasAnswer = itemStatus[activeItem ?? ""] === "answered"
+  const hideAutoAdvanceNext =
+    Boolean(activeSlide) &&
+    itemAutoAdvances(activeSlide!) &&
+    !activeSlide?.input
   const showCancel = cancel
 
   return (
@@ -384,6 +394,12 @@ export function QuestionBatch({
                 name={item.name}
                 required={item.required}
                 multiple={item.multiple}
+                onStatusChange={(status) => {
+                  setItemStatus((current) => ({
+                    ...current,
+                    [item.name]: status,
+                  }))
+                }}
               >
                 <CardHeader>
                   <QuestionnaireTitle id={titleId} render={<CardTitle />}>
@@ -498,13 +514,16 @@ export function QuestionBatch({
                 </QuestionnairePrevious>
                 <QuestionnaireSkip>{labels?.skip}</QuestionnaireSkip>
                 {showReviewNext ? (
-                  <Button
-                    type="button"
-                    className="col-start-3 row-start-1 justify-self-end"
-                    onClick={enterReview}
-                  >
-                    {labels?.next ?? "Next"}
-                  </Button>
+                  hideAutoAdvanceNext ? null : (
+                    <Button
+                      type="button"
+                      className="col-start-3 row-start-1 justify-self-end"
+                      disabled={!hasAnswer}
+                      onClick={enterReview}
+                    >
+                      {labels?.next ?? "Next"}
+                    </Button>
+                  )
                 ) : (
                   <>
                     <QuestionnaireNext>
