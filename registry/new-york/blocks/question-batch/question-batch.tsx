@@ -1,7 +1,9 @@
 "use client"
 
 import * as React from "react"
+import { ArrowLeftIcon } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardAction,
@@ -51,7 +53,7 @@ type QuestionBatchItemBase = {
 export type QuestionBatchItem =
   | (QuestionBatchItemBase & {
       multiple?: false
-      /** After a single choice, go to the next slide. Not valid on `multiple`. */
+      /** After a single choice, go to the next slide (or review). Not valid on `multiple`. */
       autoAdvance?: boolean
     })
   | (QuestionBatchItemBase & {
@@ -63,12 +65,15 @@ export type QuestionBatchLabels = {
   next?: string
   skip?: string
   submit?: string
+  review?: string
 }
 
 export type QuestionBatchProps = {
   items: QuestionBatchItem[]
   className?: string
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void
+  /** After the last question, show a review step before submit. Default false. */
+  review?: boolean
   autoAdvanceDelay?: number
   shortcuts?: "numbers" | "letters" | false
   labels?: QuestionBatchLabels
@@ -77,9 +82,47 @@ export type QuestionBatchProps = {
   onItemChange?: (item: string) => void
 }
 
+type ReviewAnswer = {
+  name: string
+  title: string
+  label: string
+}
+
 function itemAutoAdvances(item: QuestionBatchItem) {
   if (item.multiple) return false
   return item.autoAdvance === true
+}
+
+function readAnswers(
+  form: HTMLFormElement,
+  items: QuestionBatchItem[],
+): ReviewAnswer[] {
+  const data = new FormData(form)
+
+  return items.map((item) => {
+    if (item.multiple) {
+      const values = data.getAll(item.name).map(String).filter(Boolean)
+      if (values.length === 0) {
+        return { name: item.name, title: item.title, label: "Skipped" }
+      }
+      const labels = values.map(
+        (value) =>
+          item.choices.find((choice) => choice.value === value)?.label ?? value,
+      )
+      return { name: item.name, title: item.title, label: labels.join(", ") }
+    }
+
+    const value = data.get(item.name)?.toString() ?? ""
+    if (!value) {
+      return { name: item.name, title: item.title, label: "Skipped" }
+    }
+    const choice = item.choices.find((entry) => entry.value === value)
+    return {
+      name: item.name,
+      title: item.title,
+      label: choice?.label ?? value,
+    }
+  })
 }
 
 function useAutoAdvance(delay: number) {
@@ -123,6 +166,7 @@ export function QuestionBatch({
   items,
   className,
   onSubmit,
+  review = false,
   autoAdvanceDelay = DEFAULT_AUTO_ADVANCE_DELAY_MS,
   shortcuts = "numbers",
   labels,
@@ -131,6 +175,10 @@ export function QuestionBatch({
   onItemChange,
 }: QuestionBatchProps) {
   const firstName = items[0]?.name ?? ""
+  const lastName = items.at(-1)?.name
+  const formRef = React.useRef<HTMLFormElement>(null)
+  const [phase, setPhase] = React.useState<"questions" | "review">("questions")
+  const [reviewAnswers, setReviewAnswers] = React.useState<ReviewAnswer[]>([])
   const [uncontrolledItem, setUncontrolledItem] = React.useState(
     () => defaultItem ?? firstName,
   )
@@ -153,11 +201,27 @@ export function QuestionBatch({
     setActiveItem(next)
   }
 
+  function enterReview() {
+    clear()
+    if (formRef.current) {
+      setReviewAnswers(readAnswers(formRef.current, items))
+    }
+    setPhase("review")
+  }
+
+  function leaveReview() {
+    setPhase("questions")
+  }
+
   function goToNextFrom(fromName: string) {
     if (activeItemRef.current !== fromName) return
     const index = items.findIndex((item) => item.name === fromName)
     const next = items[index + 1]
-    if (next) setActiveItem(next.name)
+    if (next) {
+      setActiveItem(next.name)
+      return
+    }
+    if (review) enterReview()
   }
 
   const collection = items.map((item) => ({
@@ -166,8 +230,12 @@ export function QuestionBatch({
     choices: item.choices.map((choice) => ({ value: choice.value })),
   }))
 
+  const showReviewNext =
+    review && phase === "questions" && activeItem === lastName
+
   return (
     <Questionnaire
+      ref={formRef}
       className={cn("w-full", className)}
       defaultItem={defaultItem}
       item={activeItem || undefined}
@@ -177,86 +245,140 @@ export function QuestionBatch({
       onSubmit={onSubmit}
     >
       <Card>
-        {items.map((item) => {
-          const titleId = `question-batch-${item.name}-title`
-          const canAutoAdvance = itemAutoAdvances(item)
-          const hasNext =
-            items.findIndex((entry) => entry.name === item.name) <
-            items.length - 1
+        <div hidden={phase === "review"}>
+          {items.map((item) => {
+            const titleId = `question-batch-${item.name}-title`
+            const canAutoAdvance = itemAutoAdvances(item)
+            const isLast = item.name === lastName
+            const hasNext = !isLast || review
 
-          return (
-            <QuestionnaireItem
-              key={item.name}
-              aria-labelledby={titleId}
-              name={item.name}
-              required={item.required}
-              multiple={item.multiple}
-            >
-              <CardHeader>
-                <QuestionnaireTitle id={titleId} render={<CardTitle />}>
-                  {item.title}
-                </QuestionnaireTitle>
-                {item.description ? (
-                  <QuestionnaireDescription render={<CardDescription />}>
-                    {item.description}
-                  </QuestionnaireDescription>
-                ) : null}
-                <CardAction>
-                  <QuestionnaireProgress
-                    render={(props, state) => (
-                      <div {...props}>
-                        Question {state.current} of {state.total}
-                      </div>
-                    )}
-                  />
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <QuestionnaireChoices>
-                  {item.choices.map((choice) => {
-                    const choiceKey = `${item.name}:${choice.value}`
-                    const isPending = pendingKey === choiceKey
-
-                    return (
-                      <QuestionnaireChoice
-                        key={choice.value}
-                        className={cn(
-                          isPending && "ring-1 ring-primary/50",
-                        )}
-                        value={choice.value}
-                        onChange={(event) => {
-                          if (!event.currentTarget.checked) {
-                            clear()
-                            return
-                          }
-                          if (!canAutoAdvance || !hasNext) return
-                          schedule(choiceKey, () => goToNextFrom(item.name))
-                        }}
-                      >
-                        {choice.label}
-                      </QuestionnaireChoice>
-                    )
-                  })}
-                  {item.input ? (
-                    <QuestionnaireInput
-                      aria-label={item.input.label}
-                      placeholder={item.input.placeholder}
-                    />
+            return (
+              <QuestionnaireItem
+                key={item.name}
+                aria-labelledby={titleId}
+                name={item.name}
+                required={item.required}
+                multiple={item.multiple}
+              >
+                <CardHeader>
+                  <QuestionnaireTitle id={titleId} render={<CardTitle />}>
+                    {item.title}
+                  </QuestionnaireTitle>
+                  {item.description ? (
+                    <QuestionnaireDescription render={<CardDescription />}>
+                      {item.description}
+                    </QuestionnaireDescription>
                   ) : null}
-                </QuestionnaireChoices>
-                <QuestionnaireError />
-              </CardContent>
-            </QuestionnaireItem>
-          )
-        })}
+                  <CardAction>
+                    <QuestionnaireProgress
+                      render={(props, state) => (
+                        <div {...props}>
+                          Question {state.current} of {state.total}
+                        </div>
+                      )}
+                    />
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <QuestionnaireChoices>
+                    {item.choices.map((choice) => {
+                      const choiceKey = `${item.name}:${choice.value}`
+                      const isPending = pendingKey === choiceKey
+
+                      return (
+                        <QuestionnaireChoice
+                          key={choice.value}
+                          className={cn(isPending && "ring-1 ring-primary/50")}
+                          value={choice.value}
+                          onChange={(event) => {
+                            if (!event.currentTarget.checked) {
+                              clear()
+                              return
+                            }
+                            if (!canAutoAdvance || !hasNext) return
+                            schedule(choiceKey, () => goToNextFrom(item.name))
+                          }}
+                        >
+                          {choice.label}
+                        </QuestionnaireChoice>
+                      )
+                    })}
+                    {item.input ? (
+                      <QuestionnaireInput
+                        aria-label={item.input.label}
+                        placeholder={item.input.placeholder}
+                      />
+                    ) : null}
+                  </QuestionnaireChoices>
+                  <QuestionnaireError />
+                </CardContent>
+              </QuestionnaireItem>
+            )
+          })}
+        </div>
+        {phase === "review" ? (
+          <>
+            <CardHeader>
+              <CardTitle>{labels?.review ?? "Review"}</CardTitle>
+              <CardDescription>Submit this batch?</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="flex flex-col gap-4">
+                {reviewAnswers.map((answer) => (
+                  <li key={answer.name} className="flex flex-col gap-1">
+                    <p className="text-sm text-muted-foreground">
+                      {answer.title}
+                    </p>
+                    <p className="text-sm font-medium">{answer.label}</p>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </>
+        ) : null}
         <CardFooter>
           <QuestionnaireActions className="w-full">
-            <QuestionnairePrevious>{labels?.previous}</QuestionnairePrevious>
-            <QuestionnaireSkip>{labels?.skip}</QuestionnaireSkip>
-            <QuestionnaireNext>{labels?.next ?? "Next"}</QuestionnaireNext>
-            <QuestionnaireSubmit>
-              {labels?.submit ?? "Submit"}
-            </QuestionnaireSubmit>
+            {phase === "review" ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="col-start-1 row-start-1 justify-self-start"
+                  onClick={leaveReview}
+                >
+                  <ArrowLeftIcon data-icon="inline-start" />
+                  {labels?.previous ?? "Back"}
+                </Button>
+                <QuestionnaireSubmit>
+                  {labels?.submit ?? "Submit"}
+                </QuestionnaireSubmit>
+              </>
+            ) : (
+              <>
+                <QuestionnairePrevious>
+                  {labels?.previous}
+                </QuestionnairePrevious>
+                <QuestionnaireSkip>{labels?.skip}</QuestionnaireSkip>
+                {showReviewNext ? (
+                  <Button
+                    type="button"
+                    className="col-start-3 row-start-1 justify-self-end"
+                    onClick={enterReview}
+                  >
+                    {labels?.next ?? "Next"}
+                  </Button>
+                ) : (
+                  <>
+                    <QuestionnaireNext>
+                      {labels?.next ?? "Next"}
+                    </QuestionnaireNext>
+                    <QuestionnaireSubmit>
+                      {labels?.submit ?? "Submit"}
+                    </QuestionnaireSubmit>
+                  </>
+                )}
+              </>
+            )}
           </QuestionnaireActions>
         </CardFooter>
       </Card>

@@ -1,5 +1,6 @@
 import { QuestionBatchAutoAdvancePreview } from "@/components/question-batch-preview"
 import { QuestionBatchDefaultPreview } from "@/components/question-batch-preview"
+import { QuestionBatchReviewPreview } from "@/components/question-batch-preview"
 import { RegistryExample } from "@/components/registry-example"
 
 export default function Home() {
@@ -24,6 +25,12 @@ export default function Home() {
           description="autoAdvance is per slide. Off for multiple choice and for the last slide."
         >
           <QuestionBatchAutoAdvancePreview />
+        </RegistryExample>
+        <RegistryExample
+          title="Review"
+          description="review on the batch. Last-slide autoAdvance goes to review, not submit."
+        >
+          <QuestionBatchReviewPreview />
         </RegistryExample>
       </main>
     </div>

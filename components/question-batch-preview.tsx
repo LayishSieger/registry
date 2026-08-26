@@ -61,7 +61,7 @@ const autoAdvanceItems: QuestionBatchItem[] = [
   {
     name: "notes",
     title: "Anything else?",
-    description: "Last slide stays on Submit. Auto-advance to review comes later.",
+    description: "Last slide stays on Submit unless review is on.",
     choices: [
       { value: "deadline", label: "There is a deadline" },
       { value: "constraints", label: "There are constraints" },
@@ -73,7 +73,42 @@ const autoAdvanceItems: QuestionBatchItem[] = [
   },
 ]
 
-function PreviewBatch({ items }: { items: QuestionBatchItem[] }) {
+const reviewItems: QuestionBatchItem[] = [
+  {
+    name: "direction",
+    title: "Which direction?",
+    description: "This slide auto-advances.",
+    required: true,
+    autoAdvance: true,
+    choices: [
+      { value: "clarify", label: "Ask a clarifying question" },
+      { value: "draft", label: "Draft a first version" },
+      { value: "review", label: "Review what exists" },
+    ],
+  },
+  {
+    name: "notes",
+    title: "Anything else?",
+    description: "Last slide auto-advances to review.",
+    autoAdvance: true,
+    choices: [
+      { value: "deadline", label: "There is a deadline" },
+      { value: "constraints", label: "There are constraints" },
+    ],
+    input: {
+      label: "Another note",
+      placeholder: "Other…",
+    },
+  },
+]
+
+function PreviewBatch({
+  items,
+  review = false,
+}: {
+  items: QuestionBatchItem[]
+  review?: boolean
+}) {
   const [submitted, setSubmitted] = React.useState<string | null>(null)
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -99,7 +134,9 @@ function PreviewBatch({ items }: { items: QuestionBatchItem[] }) {
     )
   }
 
-  return <QuestionBatch items={items} onSubmit={handleSubmit} />
+  return (
+    <QuestionBatch items={items} review={review} onSubmit={handleSubmit} />
+  )
 }
 
 export function QuestionBatchDefaultPreview() {
@@ -108,4 +145,8 @@ export function QuestionBatchDefaultPreview() {
 
 export function QuestionBatchAutoAdvancePreview() {
   return <PreviewBatch items={autoAdvanceItems} />
+}
+
+export function QuestionBatchReviewPreview() {
+  return <PreviewBatch items={reviewItems} review />
 }
