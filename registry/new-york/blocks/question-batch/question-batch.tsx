@@ -224,6 +224,17 @@ export function QuestionBatch({
     if (review) enterReview()
   }
 
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    // Skip on the last item calls form.requestSubmit(). Intercept that
+    // while questions are still open so review is not bypassed.
+    if (review && phase === "questions") {
+      event.preventDefault()
+      enterReview()
+      return
+    }
+    onSubmit?.(event)
+  }
+
   const collection = items.map((item) => ({
     name: item.name,
     required: item.required,
@@ -242,7 +253,7 @@ export function QuestionBatch({
       items={collection}
       shortcuts={shortcuts === false ? undefined : shortcuts}
       onItemChange={handleItemChange}
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
     >
       <Card>
         <div hidden={phase === "review"}>
