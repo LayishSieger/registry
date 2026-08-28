@@ -1,8 +1,11 @@
 "use client"
 
 import * as React from "react"
-import type { QuestionnaireItemStatus } from "@shadcn/react/questionnaire"
-import { ArrowLeftIcon, XIcon } from "lucide-react"
+import {
+  Questionnaire as QuestionnairePrimitive,
+  type QuestionnaireItemStatus,
+} from "@shadcn/react/questionnaire"
+import { ArrowLeftIcon, ArrowRightIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,7 +20,6 @@ import {
 import {
   Questionnaire,
   QuestionnaireActions,
-  QuestionnaireChoice,
   QuestionnaireChoices,
   QuestionnaireDescription,
   QuestionnaireError,
@@ -120,44 +122,183 @@ function itemAutoAdvances(item: QuestionBatchItem) {
   return item.autoAdvance === true
 }
 
+type ItemSelection = string | string[] | null
+
+function emptySelection(item: QuestionBatchItem): ItemSelection {
+  return item.multiple ? [] : null
+}
+
+function isChoiceSelected(
+  item: QuestionBatchItem,
+  choiceValue: string,
+  selection: Record<string, ItemSelection>,
+) {
+  const value = selection[item.name]
+  if (item.multiple) {
+    return Array.isArray(value) && value.includes(choiceValue)
+  }
+  return value === choiceValue
+}
+
+function selectedValues(value: ItemSelection | undefined): string[] {
+  return Array.isArray(value) ? value : []
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+  if (target.isContentEditable) return true
+  if (target instanceof HTMLTextAreaElement) return true
+  if (!(target instanceof HTMLInputElement)) return false
+  return !["button", "checkbox", "radio", "reset", "submit"].includes(
+    target.type,
+  )
+}
+
+function isChoiceInput(
+  target: EventTarget | null,
+): target is HTMLInputElement {
+  return (
+    target instanceof HTMLInputElement &&
+    (target.type === "radio" || target.type === "checkbox")
+  )
+}
+
+function clickSlot(
+  form: HTMLFormElement | null,
+  slot: "previous" | "skip" | "next" | "submit",
+) {
+  const button = form?.querySelector<HTMLButtonElement>(
+    `[data-slot=questionnaire-${slot}]`,
+  )
+  if (!button || button.disabled || button.hidden) return false
+  if (button.getAttribute("aria-hidden") === "true") return false
+  button.click()
+  return true
+}
+
+function activeChoiceInputs(form: HTMLFormElement | null) {
+  if (!form) return []
+  const items = [
+    ...form.querySelectorAll<HTMLElement>("[data-slot=questionnaire-item]"),
+  ]
+  const active = items.find((item) => !item.hidden)
+  if (!active) return []
+  return [
+    ...active.querySelectorAll<HTMLInputElement>(
+      "[data-slot=questionnaire-choice-input]",
+    ),
+  ].filter((input) => !input.disabled)
+}
+
+function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
+  const inputs = activeChoiceInputs(form)
+  if (inputs.length === 0) return
+  const currentIndex = inputs.findIndex(
+    (input) => input === document.activeElement,
+  )
+  const nextIndex =
+    currentIndex < 0
+      ? delta === 1
+        ? 0
+        : inputs.length - 1
+      : (currentIndex + delta + inputs.length) % inputs.length
+  inputs[nextIndex]?.focus()
+}
+
+function QuestionBatchOptionRow({
+  children,
+  className,
+  isPending = false,
+  showHoverArrow = false,
+  ...props
+}: React.ComponentProps<typeof QuestionnairePrimitive.Choice> & {
+  isPending?: boolean
+  showHoverArrow?: boolean
+}) {
+  return (
+    <QuestionnairePrimitive.Choice
+      data-slot="questionnaire-choice"
+      className={cn(
+        "group/questionnaire-choice relative flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1.5 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70 data-checked:bg-accent data-checked:text-accent-foreground",
+        "data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50",
+        isPending && "ring-1 ring-primary/50",
+        className,
+      )}
+      {...props}
+    >
+      <QuestionnairePrimitive.ChoiceInput
+        data-slot="questionnaire-choice-input"
+        className="absolute inset-0 size-full cursor-pointer opacity-0"
+      />
+      <QuestionnairePrimitive.ChoiceLabel
+        data-slot="questionnaire-choice-label"
+        className="min-w-0 flex-1 leading-snug"
+      >
+        {children}
+      </QuestionnairePrimitive.ChoiceLabel>
+      <span className="relative size-6 shrink-0">
+        <QuestionnairePrimitive.ChoiceShortcut
+          data-slot="questionnaire-choice-shortcut"
+          className={cn(
+            "pointer-events-none inline-flex size-6 items-center justify-center rounded-md border border-transparent font-mono text-xs font-medium text-muted-foreground group-data-checked/questionnaire-choice:border-primary group-data-checked/questionnaire-choice:bg-primary group-data-checked/questionnaire-choice:text-primary-foreground",
+            showHoverArrow && "group-hover/questionnaire-choice:hidden",
+          )}
+        />
+        {showHoverArrow ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 hidden items-center justify-center rounded-md bg-primary text-primary-foreground group-hover/questionnaire-choice:inline-flex"
+          >
+            <ArrowRightIcon className="size-3" />
+          </span>
+        ) : null}
+      </span>
+    </QuestionnairePrimitive.Choice>
+  )
+}
+
+function skippedAnswer(item: QuestionBatchItem): QuestionBatchAnswer {
+  return {
+    name: item.name,
+    title: item.title,
+    value: null,
+    label: "Skipped",
+  }
+}
+
+function labelsForValues(item: QuestionBatchItem, values: string[]) {
+  return values.map(
+    (value) =>
+      item.choices.find((choice) => choice.value === value)?.label ?? value,
+  )
+}
+
 function readAnswers(
   form: HTMLFormElement,
   items: QuestionBatchItem[],
+  selection: Record<string, ItemSelection>,
 ): QuestionBatchAnswer[] {
   const data = new FormData(form)
 
   return items.map((item) => {
     if (item.multiple) {
-      const values = data.getAll(item.name).map(String).filter(Boolean)
-      if (values.length === 0) {
-        return {
-          name: item.name,
-          title: item.title,
-          value: null,
-          label: "Skipped",
-        }
-      }
-      const labels = values.map(
-        (value) =>
-          item.choices.find((choice) => choice.value === value)?.label ?? value,
-      )
+      const selected = selectedValues(selection[item.name])
+      const fromForm = data.getAll(item.name).map(String).filter(Boolean)
+      const values = selected.length > 0 ? selected : fromForm
+      if (values.length === 0) return skippedAnswer(item)
       return {
         name: item.name,
         title: item.title,
         value: values,
-        label: labels.join(", "),
+        label: labelsForValues(item, values).join(", "),
       }
     }
 
-    const value = data.get(item.name)?.toString() ?? ""
-    if (!value) {
-      return {
-        name: item.name,
-        title: item.title,
-        value: null,
-        label: "Skipped",
-      }
-    }
+    const selected = selection[item.name]
+    const fromForm = data.get(item.name)?.toString() ?? ""
+    const value =
+      typeof selected === "string" && selected.length > 0 ? selected : fromForm
+    if (!value) return skippedAnswer(item)
     const choice = item.choices.find((entry) => entry.value === value)
     return {
       name: item.name,
@@ -286,6 +427,11 @@ export function QuestionBatch({
   const [itemStatus, setItemStatus] = React.useState<
     Partial<Record<string, QuestionnaireItemStatus>>
   >({})
+  const [selection, setSelection] = React.useState<
+    Record<string, ItemSelection>
+  >({})
+  const selectionRef = React.useRef(selection)
+  selectionRef.current = selection
   const [uncontrolledItem, setUncontrolledItem] = React.useState(
     () => defaultItem ?? firstName,
   )
@@ -311,13 +457,104 @@ export function QuestionBatch({
   function enterReview() {
     clear()
     if (formRef.current) {
-      setReviewAnswers(readAnswers(formRef.current, items))
+      setReviewAnswers(
+        readAnswers(formRef.current, items, selectionRef.current),
+      )
     }
     setPhase("review")
   }
 
   function leaveReview() {
     setPhase("questions")
+  }
+
+  function continueForward() {
+    if (showReviewNext) {
+      if (hasAnswer) enterReview()
+      return
+    }
+    if (clickSlot(formRef.current, "next")) return
+    clickSlot(formRef.current, "submit")
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
+    if (event.defaultPrevented || event.nativeEvent.isComposing) return
+    if (event.metaKey || event.ctrlKey || event.altKey) return
+    if (isEditableTarget(event.target)) return
+
+    const key = event.key
+    const form = formRef.current
+
+    if (phase === "review") {
+      if (key === "ArrowLeft") {
+        event.preventDefault()
+        leaveReview()
+      } else if (key === "Enter") {
+        event.preventDefault()
+        clickSlot(form, "submit")
+      }
+      return
+    }
+
+    if (pendingKey != null && (key === "ArrowLeft" || key === "ArrowRight")) {
+      event.preventDefault()
+      return
+    }
+
+    if (key === "ArrowUp" || key === "ArrowDown") {
+      event.preventDefault()
+      moveChoiceFocus(form, key === "ArrowDown" ? 1 : -1)
+      return
+    }
+
+    if (key === "ArrowLeft") {
+      event.preventDefault()
+      clickSlot(form, "previous")
+      return
+    }
+
+    if (key === "ArrowRight") {
+      event.preventDefault()
+      if (nextIsShowing) {
+        if (showReviewNext) {
+          if (hasAnswer) enterReview()
+          return
+        }
+        clickSlot(form, "next")
+        return
+      }
+      if (!skipWouldSubmit) clickSlot(form, "skip")
+      return
+    }
+
+    if (key === " " && isChoiceInput(event.target)) {
+      event.preventDefault()
+      event.target.click()
+      return
+    }
+
+    if (key !== "Enter") return
+
+    if (isChoiceInput(event.target) && activeSlide) {
+      const focusedSelected = isChoiceSelected(
+        activeSlide,
+        event.target.value,
+        selection,
+      )
+      if (!hasAnswer || !focusedSelected) {
+        event.preventDefault()
+        event.target.click()
+        return
+      }
+      event.preventDefault()
+      continueForward()
+      return
+    }
+
+    if (hasAnswer) {
+      event.preventDefault()
+      continueForward()
+    }
   }
 
   function goToNextFrom(fromName: string) {
@@ -347,7 +584,11 @@ export function QuestionBatch({
     event.preventDefault()
     onResult?.({
       status: "submitted",
-      answers: readAnswers(event.currentTarget, items),
+      answers: readAnswers(
+        event.currentTarget,
+        items,
+        selectionRef.current,
+      ),
     })
     onSubmit?.(event)
   }
@@ -362,11 +603,29 @@ export function QuestionBatch({
     review && phase === "questions" && activeItem === lastName
   const activeSlide = items.find((item) => item.name === activeItem)
   const hasAnswer = itemStatus[activeItem ?? ""] === "answered"
-  const hideAutoAdvanceNext =
+  const autoAdvanceSlide =
     Boolean(activeSlide) &&
     itemAutoAdvances(activeSlide!) &&
     !activeSlide?.input
+  const hideAutoAdvanceNext =
+    autoAdvanceSlide && (!hasAnswer || pendingKey != null)
+  const nextIsShowing =
+    !hideAutoAdvanceNext && Boolean(showReviewNext || activeItem !== lastName)
+  const skipWouldSubmit = activeItem === lastName && !review
+  const skipHasArrow = !nextIsShowing && !skipWouldSubmit
+  const backLabel = labels?.previous ?? "Back"
+  const skipLabel = labels?.skip ?? "Skip"
+  const nextLabel = labels?.next ?? "Next"
   const showCancel = cancel
+
+  function clearItemSelection(name: string) {
+    const item = items.find((entry) => entry.name === name)
+    if (!item) return
+    setSelection((current) => ({
+      ...current,
+      [name]: emptySelection(item),
+    }))
+  }
 
   return (
     <Questionnaire
@@ -377,6 +636,7 @@ export function QuestionBatch({
       items={collection}
       shortcuts={shortcuts === false ? undefined : shortcuts}
       onItemChange={handleItemChange}
+      onKeyDown={handleKeyDown}
       onSubmit={handleSubmit}
     >
       <Card>
@@ -429,27 +689,67 @@ export function QuestionBatch({
                   </CardAction>
                 </CardHeader>
                 <CardContent>
-                  <QuestionnaireChoices>
+                  <QuestionnaireChoices className="gap-1">
                     {item.choices.map((choice) => {
                       const choiceKey = `${item.name}:${choice.value}`
                       const isPending = pendingKey === choiceKey
+                      const isSelected = isChoiceSelected(
+                        item,
+                        choice.value,
+                        selection,
+                      )
+                      const showHoverArrow =
+                        canAutoAdvance &&
+                        !item.input &&
+                        itemStatus[item.name] !== "answered" &&
+                        !isSelected
 
                       return (
-                        <QuestionnaireChoice
+                        <QuestionBatchOptionRow
                           key={choice.value}
-                          className={cn(isPending && "ring-1 ring-primary/50")}
+                          checked={isSelected}
+                          disabled={pendingKey != null && !isPending}
+                          isPending={isPending}
+                          showHoverArrow={showHoverArrow}
                           value={choice.value}
+                          onClick={() => {
+                            if (item.multiple || !isSelected) return
+                            clear()
+                            clearItemSelection(item.name)
+                          }}
                           onChange={(event) => {
-                            if (!event.currentTarget.checked) {
+                            const checked = event.currentTarget.checked
+                            const value = choice.value
+
+                            setSelection((current) => {
+                              if (item.multiple) {
+                                const selected = selectedValues(
+                                  current[item.name],
+                                )
+                                return {
+                                  ...current,
+                                  [item.name]: checked
+                                    ? [...selected, value]
+                                    : selected.filter((entry) => entry !== value),
+                                }
+                              }
+                              return {
+                                ...current,
+                                [item.name]: checked ? value : null,
+                              }
+                            })
+
+                            if (!checked) {
                               clear()
                               return
                             }
                             if (!canAutoAdvance || !hasNext) return
+                            if (itemStatus[item.name] === "answered") return
                             schedule(choiceKey, () => goToNextFrom(item.name))
                           }}
                         >
                           {choice.label}
-                        </QuestionnaireChoice>
+                        </QuestionBatchOptionRow>
                       )
                     })}
                     {item.input ? (
@@ -501,7 +801,7 @@ export function QuestionBatch({
                   onClick={leaveReview}
                 >
                   <ArrowLeftIcon data-icon="inline-start" />
-                  {labels?.previous ?? "Back"}
+                  {backLabel}
                 </Button>
                 <QuestionnaireSubmit>
                   {labels?.submit ?? "Submit"}
@@ -510,9 +810,23 @@ export function QuestionBatch({
             ) : (
               <>
                 <QuestionnairePrevious>
-                  {labels?.previous}
+                  <ArrowLeftIcon data-icon="inline-start" />
+                  {backLabel}
                 </QuestionnairePrevious>
-                <QuestionnaireSkip>{labels?.skip}</QuestionnaireSkip>
+                <QuestionnaireSkip
+                  className={cn(pendingKey != null && "hidden")}
+                  disabled={pendingKey != null}
+                  onClick={() => {
+                    if (!activeItem) return
+                    clear()
+                    clearItemSelection(activeItem)
+                  }}
+                >
+                  {skipLabel}
+                  {skipHasArrow ? (
+                    <ArrowRightIcon data-icon="inline-end" />
+                  ) : null}
+                </QuestionnaireSkip>
                 {showReviewNext ? (
                   hideAutoAdvanceNext ? null : (
                     <Button
@@ -521,14 +835,18 @@ export function QuestionBatch({
                       disabled={!hasAnswer}
                       onClick={enterReview}
                     >
-                      {labels?.next ?? "Next"}
+                      {nextLabel}
+                      <ArrowRightIcon data-icon="inline-end" />
                     </Button>
                   )
                 ) : (
                   <>
-                    <QuestionnaireNext>
-                      {labels?.next ?? "Next"}
-                    </QuestionnaireNext>
+                    {hideAutoAdvanceNext ? null : (
+                      <QuestionnaireNext>
+                        {nextLabel}
+                        <ArrowRightIcon data-icon="inline-end" />
+                      </QuestionnaireNext>
+                    )}
                     <QuestionnaireSubmit>
                       {labels?.submit ?? "Submit"}
                     </QuestionnaireSubmit>

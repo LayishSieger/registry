@@ -40,7 +40,7 @@ const autoAdvanceItems: QuestionBatchItem[] = [
   {
     name: "direction",
     title: "Which direction?",
-    description: "This slide sets autoAdvance.",
+    description: "First pick auto-advances. Back brings Next back.",
     required: true,
     autoAdvance: true,
     choices: [
@@ -80,7 +80,7 @@ const reviewItems: QuestionBatchItem[] = [
   {
     name: "direction",
     title: "Which direction?",
-    description: "This slide auto-advances.",
+    description: "First pick auto-advances. Back brings Next back.",
     required: true,
     autoAdvance: true,
     choices: [

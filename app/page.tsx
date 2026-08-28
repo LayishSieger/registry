@@ -24,7 +24,7 @@ export default function Home() {
         </RegistryExample>
         <RegistryExample
           title="Auto-advance"
-          description="autoAdvance is per slide. Off for multiple choice and for the last slide."
+          description="First pick auto-advances. After Back, Next comes back. Skip is no answer."
         >
           <QuestionBatchAutoAdvancePreview />
         </RegistryExample>
