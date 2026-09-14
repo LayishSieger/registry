@@ -2,6 +2,8 @@
 
 A [shadcn](https://ui.shadcn.com) registry of composed blocks. Copy a block into your project with the CLI — you own the source.
 
+Docs: [layish.vercel.app](https://layish.vercel.app)
+
 ## Ask
 
 A questionnaire wrap with review, cancel, auto-advance, and HITL-shaped results for [AI SDK](https://ai-sdk.dev) `addToolOutput`.

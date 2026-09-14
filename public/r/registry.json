@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "layish",
-  "homepage": "https://github.com/layishsieger/registry",
+  "homepage": "https://layish.vercel.app",
   "items": [
     {
       "name": "ask",
