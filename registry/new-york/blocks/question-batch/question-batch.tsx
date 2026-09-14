@@ -976,6 +976,19 @@ export function QuestionBatch({
   const typingOtherSingle =
     Boolean(activeSlide && !activeSlide.multiple && activeSlide.input) &&
     (otherDrafts[activeItem ?? ""]?.text.length ?? 0) > 0
+  const hideSkip = pendingKey != null || typingOtherSingle
+  const hasPrevious =
+    phase === "review" || (items.length > 1 && activeItem !== firstName)
+  const hasSkip =
+    phase === "questions" &&
+    activeSlide != null &&
+    !activeSlide.required &&
+    !hideSkip
+  const hasNext = phase === "questions" && nextIsShowing
+  const hasSubmit =
+    phase === "review" ||
+    (phase === "questions" && activeItem === lastName && !review)
+  const showActions = hasPrevious || hasSkip || hasNext || hasSubmit
   const backLabel = labels?.previous ?? "Back"
   const skipLabel = labels?.skip ?? "Skip"
   const nextLabel = labels?.next ?? "Next"
@@ -1334,7 +1347,8 @@ export function QuestionBatch({
             </CardContent>
           </>
         ) : null}
-        <CardFooter>
+        {showActions ? (
+          <CardFooter className="border-t-0 bg-transparent">
           <QuestionnaireActions className="w-full">
             {phase === "review" ? (
               <>
@@ -1359,9 +1373,10 @@ export function QuestionBatch({
                 </QuestionnairePrevious>
                 <QuestionnaireSkip
                   className={cn(
-                    (pendingKey != null || typingOtherSingle) && "hidden",
+                    hideSkip && "hidden",
+                    skipHasArrow && "col-start-3",
                   )}
-                  disabled={pendingKey != null || typingOtherSingle}
+                  disabled={hideSkip}
                   onClick={() => {
                     if (!activeItem) return
                     clear()
@@ -1402,7 +1417,8 @@ export function QuestionBatch({
               </>
             )}
           </QuestionnaireActions>
-        </CardFooter>
+          </CardFooter>
+        ) : null}
       </Card>
     </Questionnaire>
   )

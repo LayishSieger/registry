@@ -172,23 +172,6 @@ export function QuestionBatchCancelPreview() {
   return <PreviewBatch items={reviewItems} review cancel />
 }
 
-const HITL_SNIPPET = `const { addToolOutput } = useChat({
-  sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
-})
-
-<QuestionBatch
-  cancel
-  review
-  items={part.input.items}
-  onResult={(output) =>
-    addToolOutput({
-      tool: "askQuestions",
-      toolCallId: part.toolCallId,
-      output,
-    })
-  }
-/>`
-
 export function QuestionBatchHitlPreview() {
   const [result, setResult] = React.useState<QuestionBatchResult | null>(null)
 
@@ -201,10 +184,6 @@ export function QuestionBatchHitlPreview() {
 
     return (
       <div className="flex w-full flex-col gap-4">
-        <p className="text-sm text-muted-foreground">
-          This is what the host sends. Not a user message — it resolves the
-          paused tool and the chat route continues.
-        </p>
         <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs">
           {`addToolOutput(${JSON.stringify(payload, null, 2)})`}
         </pre>
@@ -218,8 +197,8 @@ export function QuestionBatchHitlPreview() {
   return (
     <div className="flex w-full flex-col gap-6">
       <p className="text-sm text-muted-foreground">
-        Agent called askQuestions and is waiting. Submit or cancel fills the
-        tool result.
+        Agent called askQuestions and is waiting. Submit or cancel sets
+        onResult — the host passes it to addToolOutput.
       </p>
       <QuestionBatch
         cancel
@@ -227,9 +206,6 @@ export function QuestionBatchHitlPreview() {
         items={reviewItems}
         onResult={setResult}
       />
-      <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs">
-        {HITL_SNIPPET}
-      </pre>
     </div>
   )
 }
