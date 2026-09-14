@@ -18,19 +18,19 @@ export default function Home() {
         <RegistryExample
           name="question-batch"
           title="Default"
-          description="question-batch — Next and Submit only."
+          description="Next and Submit. Other is a row — Enter commits, it is not an answer while typing."
         >
           <QuestionBatchDefaultPreview />
         </RegistryExample>
         <RegistryExample
           title="Auto-advance"
-          description="First pick auto-advances. After Back, Next comes back. Skip is no answer."
+          description="First pick auto-advances. Other Enter commits and advances. After Back, Next comes back."
         >
           <QuestionBatchAutoAdvancePreview />
         </RegistryExample>
         <RegistryExample
           title="Review"
-          description="review on the batch. Last-slide autoAdvance goes to review, not submit."
+          description="review on the batch. Last-slide autoAdvance and Other commit go to review, not submit."
         >
           <QuestionBatchReviewPreview />
         </RegistryExample>

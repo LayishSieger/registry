@@ -24,14 +24,14 @@ const defaultItems: QuestionBatchItem[] = [
   {
     name: "notes",
     title: "Anything else?",
-    description: "Skip, pick one, or write your own.",
+    description: "Skip, pick one, or type Other and press Enter to save.",
     choices: [
       { value: "deadline", label: "There is a deadline" },
       { value: "constraints", label: "There are constraints" },
     ],
     input: {
       label: "Another note",
-      placeholder: "Other…",
+      placeholder: "Other",
     },
   },
 ]
@@ -40,7 +40,7 @@ const autoAdvanceItems: QuestionBatchItem[] = [
   {
     name: "direction",
     title: "Which direction?",
-    description: "First pick auto-advances. Back brings Next back.",
+    description: "First pick auto-advances. Other commits on Enter.",
     required: true,
     autoAdvance: true,
     choices: [
@@ -48,11 +48,15 @@ const autoAdvanceItems: QuestionBatchItem[] = [
       { value: "draft", label: "Draft a first version" },
       { value: "review", label: "Review what exists" },
     ],
+    input: {
+      label: "Another direction",
+      placeholder: "Other",
+    },
   },
   {
     name: "include",
     title: "What should we include?",
-    description: "Multiple choice has no autoAdvance. Use Next.",
+    description: "Multiple choice has no autoAdvance. Other saves with a check.",
     required: true,
     multiple: true,
     choices: [
@@ -60,6 +64,10 @@ const autoAdvanceItems: QuestionBatchItem[] = [
       { value: "examples", label: "Examples" },
       { value: "risks", label: "Risks" },
     ],
+    input: {
+      label: "Something else to include",
+      placeholder: "Other",
+    },
   },
   {
     name: "notes",
@@ -71,7 +79,7 @@ const autoAdvanceItems: QuestionBatchItem[] = [
     ],
     input: {
       label: "Another note",
-      placeholder: "Other…",
+      placeholder: "Other",
     },
   },
 ]
@@ -80,7 +88,7 @@ const reviewItems: QuestionBatchItem[] = [
   {
     name: "direction",
     title: "Which direction?",
-    description: "First pick auto-advances. Back brings Next back.",
+    description: "First pick auto-advances. Other commits on Enter.",
     required: true,
     autoAdvance: true,
     choices: [
@@ -88,6 +96,10 @@ const reviewItems: QuestionBatchItem[] = [
       { value: "draft", label: "Draft a first version" },
       { value: "review", label: "Review what exists" },
     ],
+    input: {
+      label: "Another direction",
+      placeholder: "Other",
+    },
   },
   {
     name: "notes",
@@ -100,7 +112,7 @@ const reviewItems: QuestionBatchItem[] = [
     ],
     input: {
       label: "Another note",
-      placeholder: "Other…",
+      placeholder: "Other",
     },
   },
 ]

@@ -5,7 +5,12 @@ import {
   Questionnaire as QuestionnairePrimitive,
   type QuestionnaireItemStatus,
 } from "@shadcn/react/questionnaire"
-import { ArrowLeftIcon, ArrowRightIcon, XIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  XIcon,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -23,7 +28,6 @@ import {
   QuestionnaireChoices,
   QuestionnaireDescription,
   QuestionnaireError,
-  QuestionnaireInput,
   QuestionnaireItem,
   QuestionnaireNext,
   QuestionnairePrevious,
@@ -43,6 +47,33 @@ import {
 import { cn } from "@/lib/utils"
 
 const DEFAULT_AUTO_ADVANCE_DELAY_MS = 380
+
+const BATCH_ROW_CLASS =
+  "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70"
+
+const BATCH_BADGE_CLASS =
+  "inline-flex size-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-medium"
+
+type OtherDraft = {
+  text: string
+  committed: boolean
+}
+
+type OtherTrailingAction = "commit" | "deselect-keep-text" | "focus-input"
+
+function emptyOtherDraft(): OtherDraft {
+  return { text: "", committed: false }
+}
+
+function resolveOtherTrailingAction(args: {
+  committed: boolean
+  focused: boolean
+  text: string
+}): OtherTrailingAction {
+  if (args.focused && args.text.trim().length > 0) return "commit"
+  if (args.committed && !args.focused) return "deselect-keep-text"
+  return "focus-input"
+}
 
 export type QuestionBatchChoice = {
   value: string
@@ -120,6 +151,29 @@ export type QuestionBatchProps = {
 function itemAutoAdvances(item: QuestionBatchItem) {
   if (item.multiple) return false
   return item.autoAdvance === true
+}
+
+function otherBadge(
+  item: QuestionBatchItem,
+  shortcuts: QuestionBatchProps["shortcuts"],
+) {
+  const index = item.choices.length
+  if (shortcuts === "letters") {
+    return index < 26 ? String.fromCharCode(65 + index) : String(index + 1)
+  }
+  return String(index + 1)
+}
+
+function otherShortcutKey(
+  item: QuestionBatchItem,
+  shortcuts: QuestionBatchProps["shortcuts"],
+) {
+  if (shortcuts === false || shortcuts == null) return null
+  const index = item.choices.length
+  if (shortcuts === "numbers") {
+    return index < 9 ? String(index + 1) : null
+  }
+  return index < 26 ? String.fromCharCode(65 + index) : null
 }
 
 type ItemSelection = string | string[] | null
@@ -219,7 +273,8 @@ function QuestionBatchOptionRow({
     <QuestionnairePrimitive.Choice
       data-slot="questionnaire-choice"
       className={cn(
-        "group/questionnaire-choice relative flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1.5 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70 data-checked:bg-accent data-checked:text-accent-foreground",
+        BATCH_ROW_CLASS,
+        "cursor-pointer data-checked:bg-accent data-checked:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50",
         isPending && "ring-1 ring-primary/50",
         className,
@@ -240,7 +295,8 @@ function QuestionBatchOptionRow({
         <QuestionnairePrimitive.ChoiceShortcut
           data-slot="questionnaire-choice-shortcut"
           className={cn(
-            "pointer-events-none inline-flex size-6 items-center justify-center rounded-md border border-transparent font-mono text-xs font-medium text-muted-foreground group-data-checked/questionnaire-choice:border-primary group-data-checked/questionnaire-choice:bg-primary group-data-checked/questionnaire-choice:text-primary-foreground",
+            BATCH_BADGE_CLASS,
+            "pointer-events-none border-transparent text-muted-foreground group-data-checked/questionnaire-choice:border-primary group-data-checked/questionnaire-choice:bg-primary group-data-checked/questionnaire-choice:text-primary-foreground",
             showHoverArrow && "group-hover/questionnaire-choice:hidden",
           )}
         />
@@ -254,6 +310,243 @@ function QuestionBatchOptionRow({
         ) : null}
       </span>
     </QuestionnairePrimitive.Choice>
+  )
+}
+
+function QuestionBatchOtherRow({
+  name,
+  label,
+  placeholder = "Other",
+  badge,
+  disabled = false,
+  isPending = false,
+  committed,
+  text,
+  autoAdvance,
+  multiple = false,
+  inputRef,
+  onTextChange,
+  onCommit,
+  onUncommitKeepText,
+  onResetDraft,
+  onFocusChange,
+}: {
+  name: string
+  label: string
+  placeholder?: string
+  badge: string
+  disabled?: boolean
+  isPending?: boolean
+  committed: boolean
+  text: string
+  autoAdvance: boolean
+  multiple?: boolean
+  inputRef: (node: HTMLInputElement | null) => void
+  onTextChange: (value: string) => void
+  onCommit: () => void
+  onUncommitKeepText: () => void
+  onResetDraft: (refocus: boolean) => void
+  onFocusChange: (focused: boolean) => void
+}) {
+  const localRef = React.useRef<HTMLInputElement | null>(null)
+  const [focused, setFocused] = React.useState(false)
+
+  function setInputNode(node: HTMLInputElement | null) {
+    localRef.current = node
+    inputRef(node)
+  }
+
+  React.useLayoutEffect(() => {
+    if (committed) return
+    const el = localRef.current
+    if (el && el.value !== text) el.value = text
+  }, [committed, text])
+
+  React.useLayoutEffect(() => {
+    const isFocus = localRef.current === document.activeElement
+    setFocused(isFocus)
+  }, [committed])
+
+  const showClear = focused && text.length > 0
+  const showCommitArrow =
+    focused && text.trim().length > 0 && autoAdvance
+  const showCommitCheck =
+    focused && text.trim().length > 0 && (multiple || !autoAdvance)
+  const highlighted = focused || committed || isPending
+  const trailingAction = resolveOtherTrailingAction({
+    committed,
+    focused,
+    text,
+  })
+
+  function handleTrailingMouseDown(event: React.MouseEvent) {
+    if (trailingAction === "commit" || trailingAction === "deselect-keep-text") {
+      event.preventDefault()
+    }
+  }
+
+  function handleTrailingClick() {
+    if (disabled) return
+    if (trailingAction === "commit") {
+      onCommit()
+      return
+    }
+    if (trailingAction === "deselect-keep-text") {
+      onUncommitKeepText()
+      localRef.current?.blur()
+      return
+    }
+    const input = localRef.current
+    if (!input) return
+    input.focus()
+    const end = input.value.length
+    input.setSelectionRange(end, end)
+  }
+
+  return (
+    <div
+      data-slot="questionnaire-other-row"
+      className={cn(
+        BATCH_ROW_CLASS,
+        highlighted && "bg-accent text-accent-foreground",
+        isPending && "ring-1 ring-primary/50",
+        disabled && "cursor-not-allowed opacity-50",
+      )}
+      onClick={(event) => {
+        if (disabled) return
+        if (event.target instanceof HTMLButtonElement) return
+        localRef.current?.focus()
+      }}
+    >
+      {committed ? (
+        <QuestionnairePrimitive.Input
+          key={`${name}-committed`}
+          ref={setInputNode}
+          aria-label={label}
+          disabled={disabled}
+          placeholder={placeholder}
+          value={text}
+          onBlur={() => {
+            setFocused(false)
+            onFocusChange(false)
+          }}
+          onChange={(event) => {
+            const next = event.currentTarget.value
+            onTextChange(next)
+            if (next.trim().length === 0) onUncommitKeepText()
+          }}
+          onFocus={() => {
+            setFocused(true)
+            onFocusChange(true)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.stopPropagation()
+              return
+            }
+            if (event.key === "Backspace" && text.length === 0) {
+              event.preventDefault()
+              event.stopPropagation()
+              onResetDraft(false)
+              localRef.current?.blur()
+              return
+            }
+            if (event.key === "Enter") {
+              event.preventDefault()
+              event.stopPropagation()
+              onCommit()
+            }
+          }}
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0 disabled:cursor-not-allowed"
+        />
+      ) : (
+        <QuestionnairePrimitive.Input
+          key={`${name}-draft`}
+          ref={setInputNode}
+          aria-label={label}
+          disabled={disabled}
+          placeholder={placeholder}
+          onBlur={() => {
+            setFocused(false)
+            onFocusChange(false)
+          }}
+          onChange={(event) => {
+            event.preventDefault()
+            onTextChange(event.currentTarget.value)
+          }}
+          onFocus={() => {
+            setFocused(true)
+            onFocusChange(true)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.stopPropagation()
+              return
+            }
+            if (event.key === "Backspace" && text.length === 0) {
+              event.preventDefault()
+              event.stopPropagation()
+              onResetDraft(false)
+              localRef.current?.blur()
+              return
+            }
+            if (event.key === "Enter") {
+              event.preventDefault()
+              event.stopPropagation()
+              onCommit()
+            }
+          }}
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0 disabled:cursor-not-allowed"
+        />
+      )}
+      {showClear ? (
+        <button
+          type="button"
+          tabIndex={-1}
+          disabled={disabled}
+          aria-label="Clear Other text"
+          className={cn(
+            BATCH_BADGE_CLASS,
+            "cursor-pointer border-transparent text-muted-foreground hover:bg-accent hover:text-foreground disabled:cursor-not-allowed",
+          )}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onResetDraft(true)}
+        >
+          <XIcon className="size-3.5" />
+        </button>
+      ) : null}
+      <button
+        type="button"
+        tabIndex={-1}
+        disabled={disabled}
+        aria-label={
+          showCommitCheck || showCommitArrow
+            ? "Save Other answer"
+            : committed && !focused
+              ? "Other — click to deselect and keep your text"
+              : `Other option ${badge}`
+        }
+        className={cn(
+          BATCH_BADGE_CLASS,
+          "cursor-pointer disabled:cursor-not-allowed",
+          committed && !focused
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-transparent bg-transparent text-muted-foreground",
+          (showCommitCheck || showCommitArrow) &&
+            "border-primary bg-primary text-primary-foreground",
+        )}
+        onMouseDown={handleTrailingMouseDown}
+        onClick={handleTrailingClick}
+      >
+        {showCommitArrow ? (
+          <ArrowRightIcon className="size-3" />
+        ) : showCommitCheck ? (
+          <CheckIcon className="size-3.5" />
+        ) : (
+          <span>{badge}</span>
+        )}
+      </button>
+    </div>
   )
 }
 
@@ -273,24 +566,50 @@ function labelsForValues(item: QuestionBatchItem, values: string[]) {
   )
 }
 
+function committedOtherText(
+  itemName: string,
+  otherDrafts: Record<string, OtherDraft>,
+) {
+  const draft = otherDrafts[itemName]
+  if (!draft?.committed) return ""
+  return draft.text.trim()
+}
+
 function readAnswers(
   form: HTMLFormElement,
   items: QuestionBatchItem[],
   selection: Record<string, ItemSelection>,
+  otherDrafts: Record<string, OtherDraft>,
 ): QuestionBatchAnswer[] {
   const data = new FormData(form)
 
   return items.map((item) => {
+    const other = committedOtherText(item.name, otherDrafts)
+
     if (item.multiple) {
       const selected = selectedValues(selection[item.name])
-      const fromForm = data.getAll(item.name).map(String).filter(Boolean)
+      const fromForm = data
+        .getAll(item.name)
+        .map(String)
+        .filter((value) => value.length > 0 && value !== other)
       const values = selected.length > 0 ? selected : fromForm
-      if (values.length === 0) return skippedAnswer(item)
+      if (values.length === 0 && !other) return skippedAnswer(item)
+      const labels = labelsForValues(item, values)
+      if (other) labels.push(other)
       return {
         name: item.name,
         title: item.title,
-        value: values,
-        label: labelsForValues(item, values).join(", "),
+        value: other ? [...values, other] : values,
+        label: labels.join(", "),
+      }
+    }
+
+    if (other) {
+      return {
+        name: item.name,
+        title: item.title,
+        value: other,
+        label: other,
       }
     }
 
@@ -432,6 +751,17 @@ export function QuestionBatch({
   >({})
   const selectionRef = React.useRef(selection)
   selectionRef.current = selection
+  const [otherDrafts, setOtherDrafts] = React.useState<
+    Record<string, OtherDraft>
+  >({})
+  const otherDraftsRef = React.useRef(otherDrafts)
+  otherDraftsRef.current = otherDrafts
+  const [otherFocusedName, setOtherFocusedName] = React.useState<string | null>(
+    null,
+  )
+  const otherInputRefs = React.useRef<Record<string, HTMLInputElement | null>>(
+    {},
+  )
   const [uncontrolledItem, setUncontrolledItem] = React.useState(
     () => defaultItem ?? firstName,
   )
@@ -454,15 +784,36 @@ export function QuestionBatch({
     setActiveItem(next)
   }
 
+  function restoreBatchKeyboard() {
+    requestAnimationFrame(() => {
+      formRef.current?.focus({ preventScroll: true })
+    })
+  }
+
+  function blurOther(name: string) {
+    otherInputRefs.current[name]?.blur()
+    setOtherFocusedName((current) => (current === name ? null : current))
+  }
+
   function enterReview() {
     clear()
     if (formRef.current) {
       setReviewAnswers(
-        readAnswers(formRef.current, items, selectionRef.current),
+        readAnswers(
+          formRef.current,
+          items,
+          selectionRef.current,
+          otherDraftsRef.current,
+        ),
       )
     }
     setPhase("review")
   }
+
+  React.useLayoutEffect(() => {
+    if (phase !== "review") return
+    formRef.current?.focus({ preventScroll: true })
+  }, [phase])
 
   function leaveReview() {
     setPhase("questions")
@@ -527,6 +878,16 @@ export function QuestionBatch({
       return
     }
 
+    if (
+      activeSlide?.input &&
+      otherShortcutKey(activeSlide, shortcuts) &&
+      key.toUpperCase() === otherShortcutKey(activeSlide, shortcuts)
+    ) {
+      event.preventDefault()
+      applyOtherTrailing(activeSlide)
+      return
+    }
+
     if (key === " " && isChoiceInput(event.target)) {
       event.preventDefault()
       event.target.click()
@@ -588,6 +949,7 @@ export function QuestionBatch({
         event.currentTarget,
         items,
         selectionRef.current,
+        otherDraftsRef.current,
       ),
     })
     onSubmit?.(event)
@@ -604,15 +966,16 @@ export function QuestionBatch({
   const activeSlide = items.find((item) => item.name === activeItem)
   const hasAnswer = itemStatus[activeItem ?? ""] === "answered"
   const autoAdvanceSlide =
-    Boolean(activeSlide) &&
-    itemAutoAdvances(activeSlide!) &&
-    !activeSlide?.input
+    Boolean(activeSlide) && itemAutoAdvances(activeSlide!)
   const hideAutoAdvanceNext =
     autoAdvanceSlide && (!hasAnswer || pendingKey != null)
   const nextIsShowing =
     !hideAutoAdvanceNext && Boolean(showReviewNext || activeItem !== lastName)
   const skipWouldSubmit = activeItem === lastName && !review
   const skipHasArrow = !nextIsShowing && !skipWouldSubmit
+  const typingOtherSingle =
+    Boolean(activeSlide && !activeSlide.multiple && activeSlide.input) &&
+    (otherDrafts[activeItem ?? ""]?.text.length ?? 0) > 0
   const backLabel = labels?.previous ?? "Back"
   const skipLabel = labels?.skip ?? "Skip"
   const nextLabel = labels?.next ?? "Next"
@@ -627,10 +990,120 @@ export function QuestionBatch({
     }))
   }
 
+  function patchOtherDraft(name: string, patch: Partial<OtherDraft>) {
+    setOtherDrafts((current) => {
+      const previous = current[name] ?? emptyOtherDraft()
+      return {
+        ...current,
+        [name]: { ...previous, ...patch },
+      }
+    })
+  }
+
+  function resetOtherDraft(name: string) {
+    setOtherDrafts((current) => ({
+      ...current,
+      [name]: emptyOtherDraft(),
+    }))
+  }
+
+  function uncommitOther(item: QuestionBatchItem, keepText = true) {
+    setOtherDrafts((current) => {
+      const previous = current[item.name] ?? emptyOtherDraft()
+      return {
+        ...current,
+        [item.name]: {
+          text: keepText ? previous.text : "",
+          committed: false,
+        },
+      }
+    })
+    if (!item.multiple && keepText) {
+      const selected = selectionRef.current[item.name]
+      if (
+        typeof selected === "string" &&
+        selected ===
+          committedOtherText(item.name, otherDraftsRef.current)
+      ) {
+        setSelection((current) => ({
+          ...current,
+          [item.name]: null,
+        }))
+      }
+    }
+    blurOther(item.name)
+    restoreBatchKeyboard()
+  }
+
+  function commitOther(item: QuestionBatchItem) {
+    if (pendingKey != null) return
+    const raw = otherDraftsRef.current[item.name]?.text ?? ""
+    const trimmed = raw.trim()
+    if (!trimmed) {
+      resetOtherDraft(item.name)
+      if (!item.multiple) {
+        setSelection((current) => ({
+          ...current,
+          [item.name]: null,
+        }))
+      }
+      blurOther(item.name)
+      restoreBatchKeyboard()
+      return
+    }
+
+    setOtherDrafts((current) => ({
+      ...current,
+      [item.name]: { text: raw, committed: true },
+    }))
+
+    if (item.multiple) {
+      blurOther(item.name)
+      restoreBatchKeyboard()
+      return
+    }
+
+    setSelection((current) => ({
+      ...current,
+      [item.name]: trimmed,
+    }))
+    blurOther(item.name)
+    restoreBatchKeyboard()
+
+    const isLast = item.name === lastName
+    const hasNext = !isLast || review
+    if (!itemAutoAdvances(item) || !hasNext) return
+    schedule(`${item.name}:other`, () => goToNextFrom(item.name))
+  }
+
+  function applyOtherTrailing(item: QuestionBatchItem) {
+    if (pendingKey != null) return
+    const draft = otherDrafts[item.name] ?? emptyOtherDraft()
+    const action = resolveOtherTrailingAction({
+      committed: draft.committed,
+      focused: otherFocusedName === item.name,
+      text: draft.text,
+    })
+    if (action === "commit") {
+      commitOther(item)
+      return
+    }
+    if (action === "deselect-keep-text") {
+      uncommitOther(item)
+      return
+    }
+    const input = otherInputRefs.current[item.name]
+    if (!input) return
+    input.focus()
+    const end = input.value.length
+    input.setSelectionRange(end, end)
+  }
+
   return (
     <Questionnaire
       ref={formRef}
-      className={cn("w-full", className)}
+      tabIndex={-1}
+      className={cn("w-full outline-none", className)}
       defaultItem={defaultItem}
       item={activeItem || undefined}
       items={collection}
@@ -700,7 +1173,6 @@ export function QuestionBatch({
                       )
                       const showHoverArrow =
                         canAutoAdvance &&
-                        !item.input &&
                         itemStatus[item.name] !== "answered" &&
                         !isSelected
 
@@ -720,6 +1192,21 @@ export function QuestionBatch({
                           onChange={(event) => {
                             const checked = event.currentTarget.checked
                             const value = choice.value
+
+                            if (!item.multiple) {
+                              setOtherDrafts((current) => {
+                                const previous =
+                                  current[item.name] ?? emptyOtherDraft()
+                                if (!previous.committed) return current
+                                return {
+                                  ...current,
+                                  [item.name]: {
+                                    ...previous,
+                                    committed: false,
+                                  },
+                                }
+                              })
+                            }
 
                             setSelection((current) => {
                               if (item.multiple) {
@@ -753,9 +1240,66 @@ export function QuestionBatch({
                       )
                     })}
                     {item.input ? (
-                      <QuestionnaireInput
-                        aria-label={item.input.label}
+                      <QuestionBatchOtherRow
+                        name={item.name}
+                        label={item.input.label}
                         placeholder={item.input.placeholder}
+                        badge={otherBadge(item, shortcuts)}
+                        disabled={pendingKey != null}
+                        isPending={pendingKey === `${item.name}:other`}
+                        committed={
+                          otherDrafts[item.name]?.committed ?? false
+                        }
+                        text={otherDrafts[item.name]?.text ?? ""}
+                        autoAdvance={canAutoAdvance}
+                        multiple={item.multiple === true}
+                        inputRef={(node) => {
+                          otherInputRefs.current[item.name] = node
+                        }}
+                        onTextChange={(value) => {
+                          patchOtherDraft(item.name, { text: value })
+                          if (
+                            !item.multiple &&
+                            (otherDrafts[item.name]?.committed ?? false)
+                          ) {
+                            setSelection((current) => ({
+                              ...current,
+                              [item.name]: value.trim() || null,
+                            }))
+                          }
+                        }}
+                        onCommit={() => commitOther(item)}
+                        onUncommitKeepText={() => uncommitOther(item)}
+                        onResetDraft={(refocus) => {
+                          resetOtherDraft(item.name)
+                          if (!item.multiple) {
+                            const selected = selectionRef.current[item.name]
+                            const other = committedOtherText(
+                              item.name,
+                              otherDraftsRef.current,
+                            )
+                            if (
+                              typeof selected === "string" &&
+                              selected === other
+                            ) {
+                              setSelection((current) => ({
+                                ...current,
+                                [item.name]: null,
+                              }))
+                            }
+                          }
+                          if (refocus) {
+                            requestAnimationFrame(() =>
+                              otherInputRefs.current[item.name]?.focus(),
+                            )
+                          } else {
+                            blurOther(item.name)
+                            restoreBatchKeyboard()
+                          }
+                        }}
+                        onFocusChange={(focused) =>
+                          setOtherFocusedName(focused ? item.name : null)
+                        }
                       />
                     ) : null}
                   </QuestionnaireChoices>
@@ -814,12 +1358,15 @@ export function QuestionBatch({
                   {backLabel}
                 </QuestionnairePrevious>
                 <QuestionnaireSkip
-                  className={cn(pendingKey != null && "hidden")}
-                  disabled={pendingKey != null}
+                  className={cn(
+                    (pendingKey != null || typingOtherSingle) && "hidden",
+                  )}
+                  disabled={pendingKey != null || typingOtherSingle}
                   onClick={() => {
                     if (!activeItem) return
                     clear()
                     clearItemSelection(activeItem)
+                    resetOtherDraft(activeItem)
                   }}
                 >
                   {skipLabel}
