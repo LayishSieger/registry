@@ -14,7 +14,7 @@ export function RegistryExample({
   children: ReactNode
 }) {
   return (
-    <section className="relative flex min-h-[450px] flex-col gap-4 rounded-lg border p-4">
+    <section className="relative flex min-h-[450px] flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1 sm:pl-3">
           <h2 className="text-sm font-medium">{title}</h2>

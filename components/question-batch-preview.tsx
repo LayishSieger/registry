@@ -195,17 +195,11 @@ export function QuestionBatchHitlPreview() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      <p className="text-sm text-muted-foreground">
-        Agent called askQuestions and is waiting. Submit or cancel sets
-        onResult — the host passes it to addToolOutput.
-      </p>
-      <QuestionBatch
-        cancel
-        review
-        items={reviewItems}
-        onResult={setResult}
-      />
-    </div>
+    <QuestionBatch
+      cancel
+      review
+      items={reviewItems}
+      onResult={setResult}
+    />
   )
 }
