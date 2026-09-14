@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  allowedDevOrigins: [
+    "registry.localhost",
+    "*.registry.localhost",
+    "registry.local",
+    "*.registry.local",
+  ],
 };
 
 export default nextConfig;
