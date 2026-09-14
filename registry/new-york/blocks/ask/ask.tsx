@@ -75,34 +75,34 @@ function resolveOtherTrailingAction(args: {
   return "focus-input"
 }
 
-export type QuestionBatchChoice = {
+export type AskChoice = {
   value: string
   label: string
 }
 
-type QuestionBatchItemBase = {
+type AskItemBase = {
   name: string
   title: string
   description?: string
   required?: boolean
-  choices: QuestionBatchChoice[]
+  choices: AskChoice[]
   input?: {
     label: string
     placeholder?: string
   }
 }
 
-export type QuestionBatchItem =
-  | (QuestionBatchItemBase & {
+export type AskItem =
+  | (AskItemBase & {
       multiple?: false
       /** After a single choice, go to the next slide (or review). Not valid on `multiple`. */
       autoAdvance?: boolean
     })
-  | (QuestionBatchItemBase & {
+  | (AskItemBase & {
       multiple: true
     })
 
-export type QuestionBatchLabels = {
+export type AskLabels = {
   previous?: string
   next?: string
   skip?: string
@@ -115,26 +115,26 @@ export type QuestionBatchLabels = {
   cancelKeep?: string
 }
 
-export type QuestionBatchAnswer = {
+export type AskAnswer = {
   name: string
   title: string
   value: string | string[] | null
   label: string
 }
 
-export type QuestionBatchResult =
-  | { status: "submitted"; answers: QuestionBatchAnswer[] }
+export type AskResult =
+  | { status: "submitted"; answers: AskAnswer[] }
   | { status: "canceled" }
 
-export type QuestionBatchProps = {
-  items: QuestionBatchItem[]
+export type AskProps = {
+  items: AskItem[]
   className?: string
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void
   /**
    * HITL-shaped result. Pass this straight to `addToolOutput({ output })`.
    * Submit → `{ status: "submitted", answers }`. Cancel → `{ status: "canceled" }`.
    */
-  onResult?: (result: QuestionBatchResult) => void
+  onResult?: (result: AskResult) => void
   /** After the last question, show a review step before submit. Default false. */
   review?: boolean
   /** Show a confirm-to-cancel control. Default false. */
@@ -142,20 +142,20 @@ export type QuestionBatchProps = {
   onCancel?: () => void
   autoAdvanceDelay?: number
   shortcuts?: "numbers" | "letters" | false
-  labels?: QuestionBatchLabels
+  labels?: AskLabels
   defaultItem?: string
   item?: string
   onItemChange?: (item: string) => void
 }
 
-function itemAutoAdvances(item: QuestionBatchItem) {
+function itemAutoAdvances(item: AskItem) {
   if (item.multiple) return false
   return item.autoAdvance === true
 }
 
 function otherBadge(
-  item: QuestionBatchItem,
-  shortcuts: QuestionBatchProps["shortcuts"],
+  item: AskItem,
+  shortcuts: AskProps["shortcuts"],
 ) {
   const index = item.choices.length
   if (shortcuts === "letters") {
@@ -165,8 +165,8 @@ function otherBadge(
 }
 
 function otherShortcutKey(
-  item: QuestionBatchItem,
-  shortcuts: QuestionBatchProps["shortcuts"],
+  item: AskItem,
+  shortcuts: AskProps["shortcuts"],
 ) {
   if (shortcuts === false || shortcuts == null) return null
   const index = item.choices.length
@@ -178,12 +178,12 @@ function otherShortcutKey(
 
 type ItemSelection = string | string[] | null
 
-function emptySelection(item: QuestionBatchItem): ItemSelection {
+function emptySelection(item: AskItem): ItemSelection {
   return item.multiple ? [] : null
 }
 
 function isChoiceSelected(
-  item: QuestionBatchItem,
+  item: AskItem,
   choiceValue: string,
   selection: Record<string, ItemSelection>,
 ) {
@@ -259,7 +259,7 @@ function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
   inputs[nextIndex]?.focus()
 }
 
-function QuestionBatchOptionRow({
+function AskOptionRow({
   children,
   className,
   isPending = false,
@@ -313,7 +313,7 @@ function QuestionBatchOptionRow({
   )
 }
 
-function QuestionBatchOtherRow({
+function AskOtherRow({
   name,
   label,
   placeholder = "Other",
@@ -550,7 +550,7 @@ function QuestionBatchOtherRow({
   )
 }
 
-function skippedAnswer(item: QuestionBatchItem): QuestionBatchAnswer {
+function skippedAnswer(item: AskItem): AskAnswer {
   return {
     name: item.name,
     title: item.title,
@@ -559,7 +559,7 @@ function skippedAnswer(item: QuestionBatchItem): QuestionBatchAnswer {
   }
 }
 
-function labelsForValues(item: QuestionBatchItem, values: string[]) {
+function labelsForValues(item: AskItem, values: string[]) {
   return values.map(
     (value) =>
       item.choices.find((choice) => choice.value === value)?.label ?? value,
@@ -577,10 +577,10 @@ function committedOtherText(
 
 function readAnswers(
   form: HTMLFormElement,
-  items: QuestionBatchItem[],
+  items: AskItem[],
   selection: Record<string, ItemSelection>,
   otherDrafts: Record<string, OtherDraft>,
-): QuestionBatchAnswer[] {
+): AskAnswer[] {
   const data = new FormData(form)
 
   return items.map((item) => {
@@ -669,7 +669,7 @@ function CancelBatchButton({
   labels,
   onCancel,
 }: {
-  labels?: QuestionBatchLabels
+  labels?: AskLabels
   onCancel?: () => void
 }) {
   const [open, setOpen] = React.useState(false)
@@ -721,7 +721,7 @@ function CancelBatchButton({
   )
 }
 
-export function QuestionBatch({
+export function Ask({
   items,
   className,
   onSubmit,
@@ -735,13 +735,13 @@ export function QuestionBatch({
   defaultItem,
   item: itemProp,
   onItemChange,
-}: QuestionBatchProps) {
+}: AskProps) {
   const firstName = items[0]?.name ?? ""
   const lastName = items.at(-1)?.name
   const formRef = React.useRef<HTMLFormElement>(null)
   const [phase, setPhase] = React.useState<"questions" | "review">("questions")
   const [reviewAnswers, setReviewAnswers] = React.useState<
-    QuestionBatchAnswer[]
+    AskAnswer[]
   >([])
   const [itemStatus, setItemStatus] = React.useState<
     Partial<Record<string, QuestionnaireItemStatus>>
@@ -1020,7 +1020,7 @@ export function QuestionBatch({
     }))
   }
 
-  function uncommitOther(item: QuestionBatchItem, keepText = true) {
+  function uncommitOther(item: AskItem, keepText = true) {
     setOtherDrafts((current) => {
       const previous = current[item.name] ?? emptyOtherDraft()
       return {
@@ -1048,7 +1048,7 @@ export function QuestionBatch({
     restoreBatchKeyboard()
   }
 
-  function commitOther(item: QuestionBatchItem) {
+  function commitOther(item: AskItem) {
     if (pendingKey != null) return
     const raw = otherDraftsRef.current[item.name]?.text ?? ""
     const trimmed = raw.trim()
@@ -1089,7 +1089,7 @@ export function QuestionBatch({
     schedule(`${item.name}:other`, () => goToNextFrom(item.name))
   }
 
-  function applyOtherTrailing(item: QuestionBatchItem) {
+  function applyOtherTrailing(item: AskItem) {
     if (pendingKey != null) return
     const draft = otherDrafts[item.name] ?? emptyOtherDraft()
     const action = resolveOtherTrailingAction({
@@ -1128,7 +1128,7 @@ export function QuestionBatch({
       <Card>
         <div hidden={phase === "review"}>
           {items.map((item) => {
-            const titleId = `question-batch-${item.name}-title`
+            const titleId = `ask-${item.name}-title`
             const canAutoAdvance = itemAutoAdvances(item)
             const isLast = item.name === lastName
             const hasNext = !isLast || review
@@ -1190,7 +1190,7 @@ export function QuestionBatch({
                         !isSelected
 
                       return (
-                        <QuestionBatchOptionRow
+                        <AskOptionRow
                           key={choice.value}
                           checked={isSelected}
                           disabled={pendingKey != null && !isPending}
@@ -1249,11 +1249,11 @@ export function QuestionBatch({
                           }}
                         >
                           {choice.label}
-                        </QuestionBatchOptionRow>
+                        </AskOptionRow>
                       )
                     })}
                     {item.input ? (
-                      <QuestionBatchOtherRow
+                      <AskOtherRow
                         name={item.name}
                         label={item.input.label}
                         placeholder={item.input.placeholder}

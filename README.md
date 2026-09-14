@@ -1,23 +1,66 @@
-# registry-template
+# Layish
 
-You can use the `shadcn` CLI to run your own component registry. Running your own
-component registry allows you to distribute your custom components, hooks, pages, and
-other files to any React project.
+A [shadcn](https://ui.shadcn.com) registry of composed blocks. Copy a block into your project with the CLI — you own the source.
 
-> [!IMPORTANT]  
-> This template uses Tailwind v4. For Tailwind v3, see [registry-template-v3](https://github.com/shadcn-ui/registry-template-v3).
+## Ask
 
-## Getting Started
+A questionnaire wrap with review, cancel, auto-advance, and HITL-shaped results for [AI SDK](https://ai-sdk.dev) `addToolOutput`.
 
-This is a template for creating a custom registry using Next.js.
+Built on [shadcn Questionnaire](https://ui.shadcn.com/docs/components/base/questionnaire).
 
-- The template uses a `registry.json` file to define components and their files.
-- The `shadcn build` command is used to build the registry.
-- The registry items are served as static files under `public/r/[name].json`.
-- The template also includes a route handler for serving registry items.
-- Every registry item are compatible with the `shadcn` CLI.
-- We have also added v0 integration using the `Open in v0` api.
+```bash
+npx shadcn@latest add layishsieger/registry/ask
+```
 
-## Documentation
+```tsx
+import { Ask } from "@/components/ask"
 
-Visit the [shadcn documentation](https://ui.shadcn.com/docs/registry) to view the full documentation.
+<Ask
+  items={[
+    {
+      name: "direction",
+      title: "Which direction?",
+      required: true,
+      choices: [
+        { value: "clarify", label: "Ask a clarifying question" },
+        { value: "draft", label: "Draft a first version" },
+      ],
+    },
+  ]}
+  onResult={(result) => {
+    // addToolOutput({ output: result })
+  }}
+/>
+```
+
+
+`onResult` is the HITL payload:
+
+- Submit → `{ status: "submitted", answers }`
+- Cancel → `{ status: "canceled" }`
+
+## Registry
+
+This is a GitHub registry. The CLI reads [`registry.json`](./registry.json) from this repo. See the [shadcn registry docs](https://ui.shadcn.com/docs/registry).
+
+```bash
+# List items
+npx shadcn@latest list layishsieger/registry
+
+# View an item
+npx shadcn@latest view layishsieger/registry/ask
+```
+
+## Development
+
+```bash
+pnpm install
+pnpm dev
+pnpm registry:build
+```
+
+Built registry files are written to `public/r`.
+
+## License
+
+MIT

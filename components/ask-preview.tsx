@@ -4,12 +4,12 @@ import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import type {
-  QuestionBatchItem,
-  QuestionBatchResult,
-} from "@/registry/new-york/blocks/question-batch/question-batch"
-import { QuestionBatch } from "@/registry/new-york/blocks/question-batch/question-batch"
+  AskItem,
+  AskResult,
+} from "@/registry/new-york/blocks/ask/ask"
+import { Ask } from "@/registry/new-york/blocks/ask/ask"
 
-const defaultItems: QuestionBatchItem[] = [
+const defaultItems: AskItem[] = [
   {
     name: "direction",
     title: "Which direction?",
@@ -36,7 +36,7 @@ const defaultItems: QuestionBatchItem[] = [
   },
 ]
 
-const autoAdvanceItems: QuestionBatchItem[] = [
+const autoAdvanceItems: AskItem[] = [
   {
     name: "direction",
     title: "Which direction?",
@@ -84,7 +84,7 @@ const autoAdvanceItems: QuestionBatchItem[] = [
   },
 ]
 
-const reviewItems: QuestionBatchItem[] = [
+const reviewItems: AskItem[] = [
   {
     name: "direction",
     title: "Which direction?",
@@ -117,7 +117,7 @@ const reviewItems: QuestionBatchItem[] = [
   },
 ]
 
-function summarizeResult(result: QuestionBatchResult) {
+function summarizeResult(result: AskResult) {
   if (result.status === "canceled") return "canceled"
   return result.answers
     .map((answer) => `${answer.name}: ${answer.label}`)
@@ -129,7 +129,7 @@ function PreviewBatch({
   review = false,
   cancel = false,
 }: {
-  items: QuestionBatchItem[]
+  items: AskItem[]
   review?: boolean
   cancel?: boolean
 }) {
@@ -147,7 +147,7 @@ function PreviewBatch({
   }
 
   return (
-    <QuestionBatch
+    <Ask
       items={items}
       review={review}
       cancel={cancel}
@@ -156,29 +156,29 @@ function PreviewBatch({
   )
 }
 
-export function QuestionBatchDefaultPreview() {
+export function AskDefaultPreview() {
   return <PreviewBatch items={defaultItems} />
 }
 
-export function QuestionBatchAutoAdvancePreview() {
+export function AskAutoAdvancePreview() {
   return <PreviewBatch items={autoAdvanceItems} />
 }
 
-export function QuestionBatchReviewPreview() {
+export function AskReviewPreview() {
   return <PreviewBatch items={reviewItems} review />
 }
 
-export function QuestionBatchCancelPreview() {
+export function AskCancelPreview() {
   return <PreviewBatch items={reviewItems} review cancel />
 }
 
-export function QuestionBatchHitlPreview() {
-  const [result, setResult] = React.useState<QuestionBatchResult | null>(null)
+export function AskHitlPreview() {
+  const [result, setResult] = React.useState<AskResult | null>(null)
 
   if (result) {
     const payload = {
-      tool: "askQuestions",
-      toolCallId: "call_askQuestions_1",
+      tool: "ask",
+      toolCallId: "call_ask_1",
       output: result,
     }
 
@@ -195,7 +195,7 @@ export function QuestionBatchHitlPreview() {
   }
 
   return (
-    <QuestionBatch
+    <Ask
       cancel
       review
       items={reviewItems}

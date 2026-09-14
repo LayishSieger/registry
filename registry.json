@@ -1,17 +1,17 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "layish",
-  "homepage": "https://github.com/LayishSieger/registry",
+  "homepage": "https://github.com/layishsieger/registry",
   "items": [
     {
-      "name": "question-batch",
+      "name": "ask",
       "type": "registry:block",
-      "title": "Question Batch",
+      "title": "Ask",
       "description": "A questionnaire wrap with HITL onResult for AI SDK addToolOutput.",
       "registryDependencies": ["questionnaire", "card", "button", "popover"],
       "files": [
         {
-          "path": "registry/new-york/blocks/question-batch/question-batch.tsx",
+          "path": "registry/new-york/blocks/ask/ask.tsx",
           "type": "registry:block"
         }
       ]

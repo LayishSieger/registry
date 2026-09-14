@@ -5,6 +5,11 @@ export function OpenInV0Button({
   name,
   className,
 }: { name: string } & React.ComponentProps<typeof Button>) {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_BASE_URL
+
+  if (!baseUrl) return null
+
   return (
     <Button
       aria-label="Open in v0"
@@ -16,7 +21,7 @@ export function OpenInV0Button({
       asChild
     >
       <a
-        href={`https://v0.dev/chat/api/open?url=${process.env.NEXT_PUBLIC_BASE_URL}/r/${name}.json`}
+        href={`https://v0.dev/chat/api/open?url=${baseUrl.replace(/\/$/, "")}/r/${name}.json`}
         target="_blank"
         rel="noreferrer"
       >
