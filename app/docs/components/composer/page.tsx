@@ -131,17 +131,17 @@ export default function ComposerPage() {
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               form=&quot;auto&quot;
             </code>{" "}
-            starts compact and expands when text wraps or Shift+Enter inserts a
-            newline. Force{" "}
+            starts compact and expands when text wraps, Shift+Enter inserts a
+            newline, or width drops below{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              minWidth
+            </code>
+            . It returns to compact only when the field is cleared — not while
+            deleting mid-wrap. Force{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               expanded
             </code>{" "}
-            anytime;{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              compact
-            </code>{" "}
-            expands only after a newline. Toolbar: attach + mode on the start,
-            mic + send on the end.
+            anytime. Shortcuts: ⌘⇧A attach, ⌘/ mode, ⌘⇧D voice, ⌘↵ send.
           </p>
           <RegistryExample>
             <ComposerExpandedPreview />
@@ -150,7 +150,8 @@ export default function ComposerPage() {
         <section className="flex flex-col gap-3">
           <Heading id="enter-key">Enter key</Heading>
           <p className="text-sm text-muted-foreground">
-            Default Enter sends. Set{" "}
+            Default Enter sends. Shift+Enter inserts a newline (and expands).
+            Set{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               enterKeyBehavior=&quot;focus-send&quot;
             </code>{" "}
@@ -159,6 +160,52 @@ export default function ComposerPage() {
           <RegistryExample>
             <ComposerFocusSendPreview />
           </RegistryExample>
+        </section>
+        <section className="flex flex-col gap-3">
+          <Heading id="keyboard">Keyboard</Heading>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="py-2 pr-4 font-medium">Shortcut</th>
+                  <th className="py-2 font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-muted-foreground">
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    Mod+Shift+A
+                  </td>
+                  <td className="py-2">Attach</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    Mod+/
+                  </td>
+                  <td className="py-2">Mode</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    Mod+Shift+D
+                  </td>
+                  <td className="py-2">Dictation / mic</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    Enter / Mod+Enter
+                  </td>
+                  <td className="py-2">Send (or stop when busy)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Mod is ⌘ on macOS and Ctrl elsewhere. Set{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              shortcuts=&#123;false&#125;
+            </code>{" "}
+            to disable.
+          </p>
         </section>
         <section className="flex flex-col gap-3">
           <Heading id="speech-input">SpeechInput</Heading>
@@ -275,6 +322,29 @@ export default function ComposerPage() {
                     auto | compact | expanded
                   </td>
                   <td className="py-2 font-mono text-[0.8rem]">auto</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    minWidth
+                  </td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">number</td>
+                  <td className="py-2 font-mono text-[0.8rem]">360</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    motionConfig
+                  </td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">
+                    visualDuration / bounce
+                  </td>
+                  <td className="py-2 font-mono text-[0.8rem]">0.22 / 0.08</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    shortcuts
+                  </td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">true</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">

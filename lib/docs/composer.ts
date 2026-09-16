@@ -88,15 +88,23 @@ Pass \`status\` / \`onStop\` / \`onSubmit\` from the host. The block does not de
 
 ## Forms
 
-- \`form="auto"\` (default) — start as a one-line pill. Expand smoothly when text wraps or Shift+Enter inserts a newline. Enter always sends.
-- \`form="compact"\` — prefer one line; expands only after a newline (Shift+Enter).
+- \`form="auto"\` (default) — start as a one-line pill. Expand when text wraps, Shift+Enter inserts a newline, or the shell is narrower than \`minWidth\`. **Returns to compact only when the field is cleared** (or after submit) — collapsing mid-edit at the wrap edge is intentionally avoided.
+- \`form="compact"\` — prefer one line; expands after a newline or when narrow.
 - \`form="expanded"\` — always multi-line; Shift+Enter = newline; Enter sends.
 
-Layout: attach + mode on the start; mic + circular ↑ send on the end. In expanded form the toolbar sits on \`block-end\`.
+Layout: attach + mode on the start; mic + circular ↑ send on the end. Compact ↔ expanded morph uses a short Motion spring (\`motionConfig\`), tuned in docs with DialKit.
 
-## Enter key
+## Keyboard
 
-Default \`enterKeyBehavior="submit"\` sends on Enter. Shift+Enter inserts a newline (and expands in \`auto\` / \`compact\`). Set \`enterKeyBehavior="focus-send"\` so the first Enter focuses the send button and the second Enter sends.
+| Shortcut | Action |
+| --- | --- |
+| \`Mod+Shift+A\` | Attach |
+| \`Mod+/\` | Mode |
+| \`Mod+Shift+D\` | Dictation / mic slot |
+| \`Enter\` / \`Mod+Enter\` | Send (or stop when busy) |
+| \`Shift+Enter\` | Newline (expands in auto/compact) |
+
+\`Mod\` is ⌘ on macOS and Ctrl elsewhere. Set \`shortcuts={false}\` to disable.
 
 ## Slots
 
@@ -151,6 +159,9 @@ While \`status\` is \`submitted\` or \`streaming\`, the primary control becomes 
 | \`status\` | \`"ready" \\| "submitted" \\| "streaming" \\| "error"\` | \`"ready"\` | Drives send vs stop. |
 | \`onStop\` | \`() => void\` | — | Called when stop is pressed while busy. |
 | \`form\` | \`"auto" \\| "compact" \\| "expanded"\` | \`"auto"\` | Layout mode. |
+| \`minWidth\` | \`number\` | \`360\` | Force expanded below this width (px). |
+| \`motionConfig\` | \`{ visualDuration?, bounce? }\` | \`0.22 / 0.08\` | Compact ↔ expanded spring. |
+| \`shortcuts\` | \`boolean\` | \`true\` | Built-in keyboard shortcuts. |
 | \`enterKeyBehavior\` | \`"submit" \\| "focus-send"\` | \`"submit"\` | Enter in the field. |
 | \`modeSlot\` | \`ReactNode \\| (props) => ReactNode\` | — | Purpose mode control. |
 | \`micSlot\` | \`ReactNode \\| (props) => ReactNode\` | default mic | Voice affordance slot. \`null\` hides it. |

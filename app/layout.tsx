@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
+import { ComposerDialRoot } from "@/components/composer-dial-root"
 import { ThemeProvider } from "@/components/theme-provider"
 import { siteConfig } from "@/lib/site"
 
@@ -47,6 +48,7 @@ export default function RootLayout({
           <SiteHeader />
           <main className="flex min-h-0 flex-1 flex-col">{children}</main>
           <SiteFooter />
+          <ComposerDialRoot />
         </ThemeProvider>
       </body>
     </html>

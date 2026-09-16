@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ChevronDownIcon } from "lucide-react"
+import { useDialKit } from "dialkit"
 
 import { SpeechInput } from "@/components/ai-elements/speech-input"
 import { Button } from "@/components/ui/button"
@@ -18,7 +19,10 @@ import type {
   ComposerStatus,
   ComposerSubmit,
 } from "@/registry/new-york/blocks/composer/composer"
-import { Composer } from "@/registry/new-york/blocks/composer/composer"
+import {
+  COMPOSER_SHORTCUTS,
+  Composer,
+} from "@/registry/new-york/blocks/composer/composer"
 
 const MODES = [
   {
@@ -66,6 +70,8 @@ function ModeSelect({
           size="sm"
           variant="ghost"
           disabled={disabled}
+          data-composer-action="mode"
+          title="Change mode (⌘/)"
           className={cn(
             "h-8 gap-1 rounded-full border-0 px-2.5 text-xs font-medium shadow-none",
             mode.className,
@@ -167,8 +173,34 @@ function useComposerDemo(initialMode = "auto") {
 
 const DEFAULT_PLACEHOLDER = "Ask anything…"
 
+function useComposerMotionDial() {
+  const dial = useDialKit("Composer motion", {
+    expand: {
+      type: "spring",
+      visualDuration: 0.22,
+      bounce: 0.08,
+    },
+    minWidth: [360, 240, 720, 8],
+  })
+
+  const expand = dial.expand
+  const motionConfig =
+    expand && typeof expand === "object" && "visualDuration" in expand
+      ? {
+          visualDuration: expand.visualDuration ?? 0.22,
+          bounce: expand.bounce ?? 0.08,
+        }
+      : { visualDuration: 0.22, bounce: 0.08 }
+
+  return {
+    motionConfig,
+    minWidth: typeof dial.minWidth === "number" ? dial.minWidth : 360,
+  }
+}
+
 export function ComposerCompactPreview() {
   const demo = useComposerDemo()
+  const dial = useComposerMotionDial()
 
   return (
     <PreviewShell title="Auto (compact → expanded)">
@@ -180,6 +212,8 @@ export function ComposerCompactPreview() {
         onStop={demo.handleStop}
         onSubmit={demo.handleSubmit}
         placeholder={DEFAULT_PLACEHOLDER}
+        minWidth={dial.minWidth}
+        motionConfig={dial.motionConfig}
         modeSlot={({ disabled }) => (
           <ModeSelect
             value={demo.mode}
@@ -189,7 +223,10 @@ export function ComposerCompactPreview() {
         )}
       />
       <p className="text-xs text-muted-foreground">
-        Starts compact. Wraps or Shift+Enter expand; Enter sends.
+        Expands on wrap / Shift+Enter / narrow width. Returns to compact only
+        when cleared. Shortcuts: {COMPOSER_SHORTCUTS.attach} attach ·{" "}
+        {COMPOSER_SHORTCUTS.mode} mode · {COMPOSER_SHORTCUTS.dictation} voice ·{" "}
+        {COMPOSER_SHORTCUTS.send} send. Tune spring in DialKit.
       </p>
       {demo.last ? (
         <p className="text-sm text-muted-foreground">{demo.last}</p>

@@ -21,6 +21,7 @@
       "type": "registry:block",
       "title": "Composer",
       "description": "Two-form prompt UI on input-group with mode and mic slots for AI SDK useChat.",
+      "dependencies": ["motion"],
       "registryDependencies": ["input-group", "button", "input", "textarea"],
       "files": [
         {
