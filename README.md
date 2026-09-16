@@ -4,6 +4,31 @@ A [shadcn](https://ui.shadcn.com) registry of composed blocks. Copy a block into
 
 Docs: [layish.vercel.app](https://layish.vercel.app)
 
+## Composer
+
+A two-form prompt shell (compact pill / expanded auto-grow) on [shadcn Input Group](https://ui.shadcn.com/docs/components/base/input-group), with mode and mic slots shaped for [AI SDK](https://ai-sdk.dev) `useChat`.
+
+```bash
+npx shadcn@latest add layishsieger/registry/composer
+```
+
+```tsx
+import { Composer } from "@/components/composer"
+
+<Composer
+  form="compact"
+  value={text}
+  onValueChange={setText}
+  status={status}
+  onStop={stop}
+  onSubmit={({ text, files }) => {
+    sendMessage({ text, files })
+    setText("")
+  }}
+  modeSlot={<button type="button">Ask</button>}
+/>
+```
+
 ## Ask
 
 A questionnaire wrap with review, cancel, auto-advance, and HITL-shaped results for [AI SDK](https://ai-sdk.dev) `addToolOutput`.

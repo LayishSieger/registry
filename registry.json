@@ -15,6 +15,19 @@
           "type": "registry:block"
         }
       ]
+    },
+    {
+      "name": "composer",
+      "type": "registry:block",
+      "title": "Composer",
+      "description": "Two-form prompt UI on input-group with mode and mic slots for AI SDK useChat.",
+      "registryDependencies": ["input-group", "button", "input", "textarea"],
+      "files": [
+        {
+          "path": "registry/new-york/blocks/composer/composer.tsx",
+          "type": "registry:block"
+        }
+      ]
     }
   ]
 }

@@ -20,6 +20,10 @@ export const docsNav: DocsNavSection[] = [
         title: "Ask",
         href: "/docs/components/ask",
       },
+      {
+        title: "Composer",
+        href: "/docs/components/composer",
+      },
     ],
   },
 ]
@@ -36,5 +40,14 @@ export const askToc: DocsTocItem[] = [
   { title: "Review", url: "#review" },
   { title: "Cancel", url: "#cancel" },
   { title: "AI SDK HITL", url: "#ai-sdk-hitl" },
+  { title: "API", url: "#api" },
+]
+
+export const composerToc: DocsTocItem[] = [
+  { title: "Installation", url: "#installation" },
+  { title: "Usage", url: "#usage" },
+  { title: "Forms", url: "#forms" },
+  { title: "Enter key", url: "#enter-key" },
+  { title: "AI SDK", url: "#ai-sdk" },
   { title: "API", url: "#api" },
 ]

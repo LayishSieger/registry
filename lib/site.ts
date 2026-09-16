@@ -6,6 +6,7 @@ export const siteConfig = {
     shadcn: "https://ui.shadcn.com",
     shadcnRegistry: "https://ui.shadcn.com/docs/registry",
     questionnaire: "https://ui.shadcn.com/docs/components/base/questionnaire",
+    inputGroup: "https://ui.shadcn.com/docs/components/base/input-group",
   },
   navItems: [
     { href: "/", label: "Home" },
@@ -19,7 +20,11 @@ export const githubRegistry = {
   item: "ask",
 }
 
-export const installCommand = `npx shadcn@latest add ${githubRegistry.owner}/${githubRegistry.repo}/${githubRegistry.item}`
+export function registryInstallCommand(item: string) {
+  return `npx shadcn@latest add ${githubRegistry.owner}/${githubRegistry.repo}/${item}`
+}
+
+export const installCommand = registryInstallCommand(githubRegistry.item)
 
 export function getSiteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"

@@ -48,7 +48,7 @@ export default function DocsPage() {
         </p>
         <CopyCommand command={installCommand} />
         <p>
-          The first block is{" "}
+          Blocks include{" "}
           <Link
             href="/docs/components/ask"
             className="font-medium underline-offset-4 hover:underline"
@@ -65,6 +65,24 @@ export default function DocsPage() {
           with review, cancel, auto-advance, and HITL-shaped results for AI SDK{" "}
           <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
             addToolOutput
+          </code>
+          , and{" "}
+          <Link
+            href="/docs/components/composer"
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            Composer
+          </Link>
+          , a two-form prompt shell on{" "}
+          <Link
+            href={siteConfig.links.inputGroup}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            Input Group
+          </Link>{" "}
+          shaped for{" "}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+            useChat
           </code>
           .
         </p>
