@@ -7,7 +7,7 @@
     "dev:app": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "registry:build": "shadcn build"
   },
   "dependencies": {
