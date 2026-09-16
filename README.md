@@ -6,7 +6,7 @@ Docs: [layish.vercel.app](https://layish.vercel.app)
 
 ## Composer
 
-A two-form prompt shell (compact pill / expanded auto-grow) on [shadcn Input Group](https://ui.shadcn.com/docs/components/base/input-group), with mode and mic slots shaped for [AI SDK](https://ai-sdk.dev) `useChat`.
+A prompt shell on [shadcn Input Group](https://ui.shadcn.com/docs/components/base/input-group), with mode and mic slots shaped for [AI SDK](https://ai-sdk.dev) `useChat`.
 
 ```bash
 npx shadcn@latest add layishsieger/registry/composer
@@ -16,7 +16,6 @@ npx shadcn@latest add layishsieger/registry/composer
 import { Composer } from "@/components/composer"
 
 <Composer
-  form="compact"
   value={text}
   onValueChange={setText}
   status={status}

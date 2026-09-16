@@ -4,8 +4,7 @@ import Link from "next/link"
 
 import { CodeBlock } from "@/components/code-block"
 import {
-  ComposerCompactPreview,
-  ComposerExpandedPreview,
+  ComposerDefaultPreview,
   ComposerFocusSendPreview,
   ComposerSpeechInputPreview,
   ComposerUseChatPreview,
@@ -85,10 +84,10 @@ export default function ComposerPage() {
         </p>
         <RegistryExample
           name="composer"
-          title="Auto"
-          description="Starts as a one-line pill. Wraps or Shift+Enter expand; Enter sends. Mode sits next to attach."
+          title="Composer"
+          description="Multi-line prompt with attach, mode slot, mic slot, and circular ↑ send."
         >
-          <ComposerCompactPreview />
+          <ComposerDefaultPreview />
         </RegistryExample>
         <section className="flex flex-col gap-3">
           <Heading id="installation">Installation</Heading>
@@ -125,33 +124,9 @@ export default function ComposerPage() {
           </p>
         </section>
         <section className="flex flex-col gap-3">
-          <Heading id="forms">Forms</Heading>
-          <p className="text-sm text-muted-foreground">
-            Default{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              form=&quot;auto&quot;
-            </code>{" "}
-            starts compact and expands when text wraps, Shift+Enter inserts a
-            newline, or width drops below{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              minWidth
-            </code>
-            . It returns to compact only when the field is cleared — not while
-            deleting mid-wrap. Force{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              expanded
-            </code>{" "}
-            anytime. Shortcuts: ⌘⇧A attach, ⌘/ mode, ⌘⇧D voice, ⌘↵ send.
-          </p>
-          <RegistryExample>
-            <ComposerExpandedPreview />
-          </RegistryExample>
-        </section>
-        <section className="flex flex-col gap-3">
           <Heading id="enter-key">Enter key</Heading>
           <p className="text-sm text-muted-foreground">
-            Default Enter sends. Shift+Enter inserts a newline (and expands).
-            Set{" "}
+            Default Enter sends. Shift+Enter inserts a newline. Set{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               enterKeyBehavior=&quot;focus-send&quot;
             </code>{" "}
@@ -316,28 +291,12 @@ export default function ComposerPage() {
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
-                    form
+                    enterKeyBehavior
                   </td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">
-                    auto | compact | expanded
+                    submit | focus-send
                   </td>
-                  <td className="py-2 font-mono text-[0.8rem]">auto</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
-                    minWidth
-                  </td>
-                  <td className="py-2 pr-4 font-mono text-[0.8rem]">number</td>
-                  <td className="py-2 font-mono text-[0.8rem]">360</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
-                    motionConfig
-                  </td>
-                  <td className="py-2 pr-4 font-mono text-[0.8rem]">
-                    visualDuration / bounce
-                  </td>
-                  <td className="py-2 font-mono text-[0.8rem]">0.22 / 0.08</td>
+                  <td className="py-2 font-mono text-[0.8rem]">submit</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
@@ -345,15 +304,6 @@ export default function ComposerPage() {
                   </td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
                   <td className="py-2 font-mono text-[0.8rem]">true</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
-                    enterKeyBehavior
-                  </td>
-                  <td className="py-2 pr-4 font-mono text-[0.8rem]">
-                    submit | focus-send
-                  </td>
-                  <td className="py-2 font-mono text-[0.8rem]">submit</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">

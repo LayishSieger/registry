@@ -46,7 +46,6 @@ export const askToc: DocsTocItem[] = [
 export const composerToc: DocsTocItem[] = [
   { title: "Installation", url: "#installation" },
   { title: "Usage", url: "#usage" },
-  { title: "Forms", url: "#forms" },
   { title: "Enter key", url: "#enter-key" },
   { title: "Keyboard", url: "#keyboard" },
   { title: "SpeechInput", url: "#speech-input" },

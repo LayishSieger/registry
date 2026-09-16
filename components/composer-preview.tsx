@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { ChevronDownIcon } from "lucide-react"
-import { useDialKit } from "dialkit"
 
 import { SpeechInput } from "@/components/ai-elements/speech-input"
 import { Button } from "@/components/ui/button"
@@ -71,7 +70,7 @@ function ModeSelect({
           variant="ghost"
           disabled={disabled}
           data-composer-action="mode"
-          title="Change mode (⌘/)"
+          title={`Change mode (${COMPOSER_SHORTCUTS.mode})`}
           className={cn(
             "h-8 gap-1 rounded-full border-0 px-2.5 text-xs font-medium shadow-none",
             mode.className,
@@ -173,47 +172,18 @@ function useComposerDemo(initialMode = "auto") {
 
 const DEFAULT_PLACEHOLDER = "Ask anything…"
 
-function useComposerMotionDial() {
-  const dial = useDialKit("Composer motion", {
-    expand: {
-      type: "spring",
-      visualDuration: 0.22,
-      bounce: 0.08,
-    },
-    minWidth: [360, 240, 720, 8],
-  })
-
-  const expand = dial.expand
-  const motionConfig =
-    expand && typeof expand === "object" && "visualDuration" in expand
-      ? {
-          visualDuration: expand.visualDuration ?? 0.22,
-          bounce: expand.bounce ?? 0.08,
-        }
-      : { visualDuration: 0.22, bounce: 0.08 }
-
-  return {
-    motionConfig,
-    minWidth: typeof dial.minWidth === "number" ? dial.minWidth : 360,
-  }
-}
-
-export function ComposerCompactPreview() {
+export function ComposerDefaultPreview() {
   const demo = useComposerDemo()
-  const dial = useComposerMotionDial()
 
   return (
-    <PreviewShell title="Auto (compact → expanded)">
+    <PreviewShell title="Composer">
       <Composer
-        form="auto"
         value={demo.text}
         onValueChange={demo.setText}
         status={demo.status}
         onStop={demo.handleStop}
         onSubmit={demo.handleSubmit}
         placeholder={DEFAULT_PLACEHOLDER}
-        minWidth={dial.minWidth}
-        motionConfig={dial.motionConfig}
         modeSlot={({ disabled }) => (
           <ModeSelect
             value={demo.mode}
@@ -223,39 +193,10 @@ export function ComposerCompactPreview() {
         )}
       />
       <p className="text-xs text-muted-foreground">
-        Expands on wrap / Shift+Enter / narrow width. Returns to compact only
-        when cleared. Shortcuts: {COMPOSER_SHORTCUTS.attach} attach ·{" "}
+        Enter sends · Shift+Enter newline · {COMPOSER_SHORTCUTS.attach} attach ·{" "}
         {COMPOSER_SHORTCUTS.mode} mode · {COMPOSER_SHORTCUTS.dictation} voice ·{" "}
-        {COMPOSER_SHORTCUTS.send} send. Tune spring in DialKit.
+        {COMPOSER_SHORTCUTS.send} send
       </p>
-      {demo.last ? (
-        <p className="text-sm text-muted-foreground">{demo.last}</p>
-      ) : null}
-    </PreviewShell>
-  )
-}
-
-export function ComposerExpandedPreview() {
-  const demo = useComposerDemo("plan")
-
-  return (
-    <PreviewShell title="Expanded">
-      <Composer
-        form="expanded"
-        value={demo.text}
-        onValueChange={demo.setText}
-        status={demo.status}
-        onStop={demo.handleStop}
-        onSubmit={demo.handleSubmit}
-        placeholder="Write a longer prompt. Shift+Enter for a new line."
-        modeSlot={({ disabled }) => (
-          <ModeSelect
-            value={demo.mode}
-            onValueChange={demo.setMode}
-            disabled={disabled}
-          />
-        )}
-      />
       {demo.last ? (
         <p className="text-sm text-muted-foreground">{demo.last}</p>
       ) : null}
@@ -269,7 +210,6 @@ export function ComposerFocusSendPreview() {
   return (
     <PreviewShell title="Enter focuses send">
       <Composer
-        form="auto"
         enterKeyBehavior="focus-send"
         value={demo.text}
         onValueChange={demo.setText}
@@ -307,7 +247,6 @@ export function ComposerSpeechInputPreview() {
   return (
     <PreviewShell title="SpeechInput in micSlot">
       <Composer
-        form="auto"
         value={demo.text}
         onValueChange={demo.setText}
         status={demo.status}
@@ -363,7 +302,6 @@ export function ComposerUseChatPreview() {
   return (
     <div className="flex w-full max-w-xl flex-col gap-4">
       <Composer
-        form="auto"
         value={text}
         onValueChange={setText}
         status={status}

@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { CopyCommand } from "@/components/copy-command"
 import { AskDefaultPreview } from "@/components/ask-preview"
-import { ComposerCompactPreview } from "@/components/composer-preview"
+import { ComposerDefaultPreview } from "@/components/composer-preview"
 import { Button } from "@/components/ui/button"
 import { installCommand, siteConfig } from "@/lib/site"
 
@@ -37,8 +37,8 @@ export default function Home() {
           <div className="flex flex-col gap-1">
             <h2 className="text-sm font-medium">Composer</h2>
             <p className="text-sm text-muted-foreground">
-              Auto pill that expands when text wraps. Mode next to attach; Enter
-              sends; busy status becomes stop.
+              Prompt shell with mode and mic slots. Enter sends; busy status
+              becomes stop.
             </p>
           </div>
           <Button asChild variant="ghost" size="sm">
@@ -46,7 +46,7 @@ export default function Home() {
           </Button>
         </div>
         <div className="flex min-h-[280px] items-center justify-center rounded-lg border bg-background p-6">
-          <ComposerCompactPreview />
+          <ComposerDefaultPreview />
         </div>
       </section>
       <section className="flex flex-col gap-3">

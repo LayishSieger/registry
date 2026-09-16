@@ -73,7 +73,7 @@ export default function DocsPage() {
           >
             Composer
           </Link>
-          , a two-form prompt shell on{" "}
+          , a prompt shell on{" "}
           <Link
             href={siteConfig.links.inputGroup}
             className="font-medium underline-offset-4 hover:underline"
