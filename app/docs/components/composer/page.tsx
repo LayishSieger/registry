@@ -85,8 +85,8 @@ export default function ComposerPage() {
         </p>
         <RegistryExample
           name="composer"
-          title="Compact"
-          description="One-line pill: circular +, mode slot, mic slot, circular ↑ send."
+          title="Auto"
+          description="Starts as a one-line pill. Wraps or Shift+Enter expand; Enter sends. Mode sits next to attach."
         >
           <ComposerCompactPreview />
         </RegistryExample>
@@ -127,18 +127,21 @@ export default function ComposerPage() {
         <section className="flex flex-col gap-3">
           <Heading id="forms">Forms</Heading>
           <p className="text-sm text-muted-foreground">
+            Default{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              compact
+              form=&quot;auto&quot;
             </code>{" "}
-            is the screenshot pill.{" "}
+            starts compact and expands when text wraps or Shift+Enter inserts a
+            newline. Force{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               expanded
             </code>{" "}
-            auto-grows; Shift+Enter inserts a newline; toolbar sits on{" "}
+            anytime;{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              block-end
-            </code>
-            .
+              compact
+            </code>{" "}
+            expands only after a newline. Toolbar: attach + mode on the start,
+            mic + send on the end.
           </p>
           <RegistryExample>
             <ComposerExpandedPreview />
@@ -178,12 +181,12 @@ export default function ComposerPage() {
             >
               AI Elements
             </Link>{" "}
-            when you want voice, then compose via the slot. Chrome/Edge use the
-            Web Speech API (no API key).{" "}
+            when you want voice. In Chrome/Edge it uses the browser Web Speech
+            API — free, no Layish tokens or API keys. Optional{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               onAudioRecorded
             </code>{" "}
-            (Whisper/etc.) is optional for Firefox/Safari.
+            (Whisper/etc.) is host-paid if you wire it for Firefox/Safari.
           </p>
           <CopyCommand command="npx ai-elements@latest add speech-input" />
           <CodeBlock code={composerSpeechUsage} />
@@ -269,9 +272,9 @@ export default function ComposerPage() {
                     form
                   </td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">
-                    compact | expanded
+                    auto | compact | expanded
                   </td>
-                  <td className="py-2 font-mono text-[0.8rem]">compact</td>
+                  <td className="py-2 font-mono text-[0.8rem]">auto</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">

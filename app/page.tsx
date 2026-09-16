@@ -37,8 +37,8 @@ export default function Home() {
           <div className="flex flex-col gap-1">
             <h2 className="text-sm font-medium">Composer</h2>
             <p className="text-sm text-muted-foreground">
-              Compact pill prompt with mode and mic slots. Enter sends; busy
-              status becomes stop.
+              Auto pill that expands when text wraps. Mode next to attach; Enter
+              sends; busy status becomes stop.
             </p>
           </div>
           <Button asChild variant="ghost" size="sm">

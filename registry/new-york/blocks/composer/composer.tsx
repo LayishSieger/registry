@@ -7,7 +7,6 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupInput,
   InputGroupTextarea,
 } from "@/components/ui/input-group"
 import { cn } from "@/lib/utils"
@@ -19,11 +18,16 @@ export type ComposerSubmit = {
 
 export type ComposerStatus = "ready" | "submitted" | "streaming" | "error"
 
-export type ComposerForm = "compact" | "expanded"
+/**
+ * - `auto` — start compact; expand when text wraps or Shift+Enter inserts a newline
+ * - `compact` — stay one-line (Enter sends; Shift+Enter expands via newline)
+ * - `expanded` — always multi-line (Shift+Enter = newline)
+ */
+export type ComposerForm = "auto" | "compact" | "expanded"
 
 /**
  * Enter in the field:
- * - `submit` — Enter sends (default). Expanded still uses Shift+Enter for newline.
+ * - `submit` — Enter sends (default). Shift+Enter inserts a newline (and expands in auto).
  * - `focus-send` — first Enter focuses the send button; Enter on send submits.
  */
 export type ComposerEnterKeyBehavior = "submit" | "focus-send"
@@ -31,6 +35,7 @@ export type ComposerEnterKeyBehavior = "submit" | "focus-send"
 export type ComposerSlotProps = {
   disabled: boolean
   busy: boolean
+  form: "compact" | "expanded"
 }
 
 export type ComposerProps = {
@@ -41,6 +46,7 @@ export type ComposerProps = {
   /** Map from useChat().status — drives send vs stop */
   status?: ComposerStatus
   onStop?: () => void
+  /** Visual / layout mode. Default `auto`. */
   form?: ComposerForm
   enterKeyBehavior?: ComposerEnterKeyBehavior
   placeholder?: string
@@ -56,6 +62,9 @@ export type ComposerProps = {
   multiple?: boolean
   onFilesChange?: (files: File[]) => void
 }
+
+const CIRCLE_BTN =
+  "size-8 shrink-0 rounded-full p-0 shadow-none [&_svg:not([class*='size-'])]:size-4"
 
 function isBusy(status: ComposerStatus | undefined) {
   return status === "submitted" || status === "streaming"
@@ -77,11 +86,31 @@ function DefaultMicButton({ disabled }: { disabled?: boolean }) {
       variant="ghost"
       disabled={disabled}
       aria-label="Voice input"
-      className="rounded-full text-muted-foreground"
+      className={cn(CIRCLE_BTN, "text-muted-foreground")}
     >
       <MicIcon />
     </InputGroupButton>
   )
+}
+
+function measureNeedsExpand(textarea: HTMLTextAreaElement | null) {
+  if (!textarea) return false
+  if (textarea.value.includes("\n")) return true
+  const styles = window.getComputedStyle(textarea)
+  const lineHeight = Number.parseFloat(styles.lineHeight) || 20
+  const paddingY =
+    Number.parseFloat(styles.paddingTop) +
+    Number.parseFloat(styles.paddingBottom)
+  const singleLine = lineHeight + paddingY
+  // Temporarily allow wrap to measure natural height
+  const prevWhiteSpace = textarea.style.whiteSpace
+  const prevHeight = textarea.style.height
+  textarea.style.whiteSpace = "pre-wrap"
+  textarea.style.height = "auto"
+  const scrollHeight = textarea.scrollHeight
+  textarea.style.whiteSpace = prevWhiteSpace
+  textarea.style.height = prevHeight
+  return scrollHeight > singleLine + 1
 }
 
 export function Composer({
@@ -91,9 +120,9 @@ export function Composer({
   onSubmit,
   status = "ready",
   onStop,
-  form = "compact",
+  form = "auto",
   enterKeyBehavior = "submit",
-  placeholder = "Message…",
+  placeholder = "Ask anything…",
   disabled = false,
   className,
   modeSlot,
@@ -107,12 +136,32 @@ export function Composer({
   const isControlled = valueProp != null
   const value = isControlled ? valueProp : uncontrolledValue
   const [files, setFiles] = React.useState<File[]>([])
+  const [autoExpanded, setAutoExpanded] = React.useState(
+    () => value.includes("\n"),
+  )
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const sendButtonRef = React.useRef<HTMLButtonElement>(null)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const busy = isBusy(status)
   const canSubmit =
     !disabled && !busy && (value.trim().length > 0 || files.length > 0)
-  const slotProps: ComposerSlotProps = { disabled: disabled || busy, busy }
+
+  const visualForm: "compact" | "expanded" =
+    form === "expanded"
+      ? "expanded"
+      : form === "compact"
+        ? value.includes("\n")
+          ? "expanded"
+          : "compact"
+        : autoExpanded || value.includes("\n")
+          ? "expanded"
+          : "compact"
+
+  const slotProps: ComposerSlotProps = {
+    disabled: disabled || busy,
+    busy,
+    form: visualForm,
+  }
 
   function setValue(next: string) {
     if (!isControlled) setUncontrolledValue(next)
@@ -127,6 +176,7 @@ export function Composer({
   function clearAfterSubmit() {
     setValue("")
     setSelectedFiles([])
+    setAutoExpanded(false)
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
@@ -148,13 +198,34 @@ export function Composer({
     submit()
   }
 
-  function handleEnterKey(
-    event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) {
+  function syncAutoExpand(nextValue: string) {
+    if (form !== "auto" && form !== "compact") return
+    if (nextValue.includes("\n")) {
+      setAutoExpanded(true)
+      return
+    }
+    // Defer measure until after React paints the new value
+    requestAnimationFrame(() => {
+      const needs = measureNeedsExpand(textareaRef.current)
+      setAutoExpanded(needs)
+    })
+  }
+
+  function handleChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    const next = event.currentTarget.value
+    setValue(next)
+    syncAutoExpand(next)
+  }
+
+  function handleEnterKey(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.nativeEvent.isComposing) return
     if (event.key !== "Enter") return
 
-    if (form === "expanded" && event.shiftKey) {
+    if (event.shiftKey) {
+      // Allow newline; auto/compact will expand
+      if (form === "auto" || form === "compact") {
+        setAutoExpanded(true)
+      }
       return
     }
 
@@ -178,6 +249,15 @@ export function Composer({
     fileInputRef.current?.click()
   }
 
+  React.useLayoutEffect(() => {
+    if (form !== "auto") return
+    if (!value) {
+      setAutoExpanded(false)
+      return
+    }
+    setAutoExpanded(measureNeedsExpand(textareaRef.current) || value.includes("\n"))
+  }, [form, value])
+
   const resolvedMode = resolveSlot(modeSlot, slotProps)
   const resolvedMic =
     micSlot === undefined ? (
@@ -193,7 +273,10 @@ export function Composer({
         variant="outline"
         disabled={slotProps.disabled}
         aria-label="Attach files"
-        className="rounded-full border-border bg-background shadow-none dark:bg-background"
+        className={cn(
+          CIRCLE_BTN,
+          "border-border bg-background dark:bg-background",
+        )}
         onClick={openFilePicker}
       >
         <PlusIcon />
@@ -205,12 +288,6 @@ export function Composer({
   const primaryLabel = busy ? "Stop generating" : "Send message"
   const primaryDisabled = disabled || (!busy && !canSubmit)
 
-  const shellClass = cn(
-    "w-full border-border/70 bg-muted/40 shadow-none dark:bg-muted/50",
-    form === "compact" ? "h-12 rounded-full" : "rounded-[1.75rem]",
-    className,
-  )
-
   const primaryButton = (
     <InputGroupButton
       ref={sendButtonRef}
@@ -220,7 +297,8 @@ export function Composer({
       disabled={primaryDisabled}
       aria-label={primaryLabel}
       className={cn(
-        "rounded-full bg-foreground text-background hover:bg-foreground/90",
+        CIRCLE_BTN,
+        "bg-foreground text-background hover:bg-foreground/90",
         "disabled:opacity-40",
       )}
       onClick={handlePrimaryAction}
@@ -251,46 +329,27 @@ export function Composer({
     />
   )
 
-  const trailingControls = (
-    <>
-      {resolvedMode}
-      {resolvedMic}
-      {primaryButton}
-    </>
+  const isExpanded = visualForm === "expanded"
+
+  const shellClass = cn(
+    "w-full border-border/70 bg-muted/40 shadow-none transition-[border-radius,background-color] duration-200 dark:bg-muted/50",
+    isExpanded ? "rounded-[1.75rem]" : "min-h-12 rounded-full",
+    className,
   )
 
-  if (form === "expanded") {
-    return (
-      <div className="flex w-full flex-col gap-2">
-        {files.length > 0 ? (
-          <p className="px-1 text-xs text-muted-foreground">
-            {files.length} file{files.length === 1 ? "" : "s"} attached
-          </p>
-        ) : null}
-        <InputGroup className={shellClass} data-disabled={disabled || undefined}>
-          {fileInput}
-          <InputGroupTextarea
-            value={value}
-            disabled={disabled || busy}
-            placeholder={placeholder}
-            rows={1}
-            className="min-h-12 field-sizing-content max-h-48 px-4 py-3.5 text-sm"
-            onChange={(event) => setValue(event.currentTarget.value)}
-            onKeyDown={handleEnterKey}
-          />
-          <InputGroupAddon
-            align="block-end"
-            className="justify-between gap-2 px-3 pb-3"
-          >
-            <div className="flex items-center gap-1.5">{resolvedAttach}</div>
-            <div className="ml-auto flex items-center gap-1.5">
-              {trailingControls}
-            </div>
-          </InputGroupAddon>
-        </InputGroup>
-      </div>
-    )
-  }
+  const leadingControls = (
+    <div className="flex items-center gap-1.5">
+      {resolvedAttach}
+      {resolvedMode}
+    </div>
+  )
+
+  const trailingControls = (
+    <div className="flex items-center gap-1.5">
+      {resolvedMic}
+      {primaryButton}
+    </div>
+  )
 
   return (
     <div className="flex w-full flex-col gap-2">
@@ -299,22 +358,51 @@ export function Composer({
           {files.length} file{files.length === 1 ? "" : "s"} attached
         </p>
       ) : null}
-      <InputGroup className={shellClass} data-disabled={disabled || undefined}>
+      <InputGroup
+        className={shellClass}
+        data-disabled={disabled || undefined}
+        data-form={visualForm}
+      >
         {fileInput}
-        <InputGroupInput
+        <InputGroupTextarea
+          ref={textareaRef}
           value={value}
           disabled={disabled || busy}
           placeholder={placeholder}
-          className="h-12 px-2 text-sm"
-          onChange={(event) => setValue(event.currentTarget.value)}
+          rows={1}
+          className={cn(
+            "field-sizing-content max-h-48 px-2 text-sm transition-[padding,min-height] duration-200",
+            isExpanded
+              ? "min-h-12 resize-none px-4 pt-3.5 pb-2"
+              : "min-h-10 max-h-10 resize-none overflow-hidden whitespace-nowrap py-2.5 leading-5",
+          )}
+          onChange={handleChange}
           onKeyDown={handleEnterKey}
         />
-        <InputGroupAddon align="inline-start" className="pl-2">
-          {resolvedAttach}
-        </InputGroupAddon>
-        <InputGroupAddon align="inline-end" className="gap-1.5 pr-2">
-          {trailingControls}
-        </InputGroupAddon>
+        {isExpanded ? (
+          <InputGroupAddon
+            align="block-end"
+            className="justify-between gap-2 px-1.5 pb-1.5 pt-0"
+          >
+            {leadingControls}
+            <div className="ml-auto">{trailingControls}</div>
+          </InputGroupAddon>
+        ) : (
+          <>
+            <InputGroupAddon
+              align="inline-start"
+              className="gap-1.5 py-0 pl-1.5 pr-0"
+            >
+              {leadingControls}
+            </InputGroupAddon>
+            <InputGroupAddon
+              align="inline-end"
+              className="gap-1.5 py-0 pr-1.5 pl-0"
+            >
+              {trailingControls}
+            </InputGroupAddon>
+          </>
+        )}
       </InputGroup>
     </div>
   )

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { ChevronDownIcon } from "lucide-react"
 
+import { SpeechInput } from "@/components/ai-elements/speech-input"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { InputGroupButton } from "@/components/ui/input-group"
-import { SpeechInput } from "@/components/ai-elements/speech-input"
+import { cn } from "@/lib/utils"
 import type {
   ComposerStatus,
   ComposerSubmit,
@@ -20,10 +21,30 @@ import type {
 import { Composer } from "@/registry/new-york/blocks/composer/composer"
 
 const MODES = [
-  { value: "ask", label: "Ask" },
-  { value: "plan", label: "Plan" },
-  { value: "debug", label: "Debug" },
-  { value: "auto", label: "Auto" },
+  {
+    value: "ask",
+    label: "Ask",
+    className:
+      "bg-sky-500/15 text-sky-800 hover:bg-sky-500/20 dark:text-sky-200",
+  },
+  {
+    value: "plan",
+    label: "Plan",
+    className:
+      "bg-violet-500/15 text-violet-800 hover:bg-violet-500/20 dark:text-violet-200",
+  },
+  {
+    value: "debug",
+    label: "Debug",
+    className:
+      "bg-amber-500/15 text-amber-900 hover:bg-amber-500/20 dark:text-amber-200",
+  },
+  {
+    value: "auto",
+    label: "Auto",
+    className:
+      "bg-emerald-500/15 text-emerald-900 hover:bg-emerald-500/20 dark:text-emerald-200",
+  },
 ] as const
 
 function ModeSelect({
@@ -35,7 +56,7 @@ function ModeSelect({
   onValueChange: (value: string) => void
   disabled?: boolean
 }) {
-  const label = MODES.find((mode) => mode.value === value)?.label ?? value
+  const mode = MODES.find((entry) => entry.value === value) ?? MODES[3]
 
   return (
     <DropdownMenu>
@@ -45,17 +66,29 @@ function ModeSelect({
           size="sm"
           variant="ghost"
           disabled={disabled}
-          className="gap-1 rounded-full px-2 text-muted-foreground"
+          className={cn(
+            "h-8 gap-1 rounded-full border-0 px-2.5 text-xs font-medium shadow-none",
+            mode.className,
+          )}
         >
-          {label}
+          {mode.label}
           <ChevronDownIcon className="size-3.5 opacity-70" />
         </InputGroupButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-36">
+      <DropdownMenuContent align="start" className="min-w-36">
         <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-          {MODES.map((mode) => (
-            <DropdownMenuRadioItem key={mode.value} value={mode.value}>
-              {mode.label}
+          {MODES.map((entry) => (
+            <DropdownMenuRadioItem key={entry.value} value={entry.value}>
+              <span
+                className={cn(
+                  "mr-2 inline-flex size-2.5 rounded-full",
+                  entry.value === "ask" && "bg-sky-500",
+                  entry.value === "plan" && "bg-violet-500",
+                  entry.value === "debug" && "bg-amber-500",
+                  entry.value === "auto" && "bg-emerald-500",
+                )}
+              />
+              {entry.label}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -81,9 +114,9 @@ function PreviewShell({
   )
 }
 
-function useComposerDemo() {
+function useComposerDemo(initialMode = "auto") {
   const [text, setText] = React.useState("")
-  const [mode, setMode] = React.useState("auto")
+  const [mode, setMode] = React.useState(initialMode)
   const [status, setStatus] = React.useState<ComposerStatus>("ready")
   const [last, setLast] = React.useState<string | null>(null)
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -132,19 +165,21 @@ function useComposerDemo() {
   }
 }
 
+const DEFAULT_PLACEHOLDER = "Ask anything…"
+
 export function ComposerCompactPreview() {
   const demo = useComposerDemo()
 
   return (
-    <PreviewShell title="Compact">
+    <PreviewShell title="Auto (compact → expanded)">
       <Composer
-        form="compact"
+        form="auto"
         value={demo.text}
         onValueChange={demo.setText}
         status={demo.status}
         onStop={demo.handleStop}
         onSubmit={demo.handleSubmit}
-        placeholder="i want to add a composer component. it should have two forms. one line"
+        placeholder={DEFAULT_PLACEHOLDER}
         modeSlot={({ disabled }) => (
           <ModeSelect
             value={demo.mode}
@@ -153,6 +188,9 @@ export function ComposerCompactPreview() {
           />
         )}
       />
+      <p className="text-xs text-muted-foreground">
+        Starts compact. Wraps or Shift+Enter expand; Enter sends.
+      </p>
       {demo.last ? (
         <p className="text-sm text-muted-foreground">{demo.last}</p>
       ) : null}
@@ -161,7 +199,7 @@ export function ComposerCompactPreview() {
 }
 
 export function ComposerExpandedPreview() {
-  const demo = useComposerDemo()
+  const demo = useComposerDemo("plan")
 
   return (
     <PreviewShell title="Expanded">
@@ -189,12 +227,12 @@ export function ComposerExpandedPreview() {
 }
 
 export function ComposerFocusSendPreview() {
-  const demo = useComposerDemo()
+  const demo = useComposerDemo("ask")
 
   return (
     <PreviewShell title="Enter focuses send">
       <Composer
-        form="compact"
+        form="auto"
         enterKeyBehavior="focus-send"
         value={demo.text}
         onValueChange={demo.setText}
@@ -225,20 +263,20 @@ function appendTranscript(current: string, transcript: string) {
 }
 
 export function ComposerSpeechInputPreview() {
-  const demo = useComposerDemo()
+  const demo = useComposerDemo("debug")
   const textRef = React.useRef(demo.text)
   textRef.current = demo.text
 
   return (
     <PreviewShell title="SpeechInput in micSlot">
       <Composer
-        form="compact"
+        form="auto"
         value={demo.text}
         onValueChange={demo.setText}
         status={demo.status}
         onStop={demo.handleStop}
         onSubmit={demo.handleSubmit}
-        placeholder="Click the mic — Web Speech API in Chrome/Edge"
+        placeholder={DEFAULT_PLACEHOLDER}
         modeSlot={({ disabled }) => (
           <ModeSelect
             value={demo.mode}
@@ -259,13 +297,12 @@ export function ComposerSpeechInputPreview() {
         )}
       />
       <p className="text-xs text-muted-foreground">
-        Docs-only demo. Composer keeps{" "}
-        <code className="rounded bg-muted px-1 py-0.5 font-mono">micSlot</code>{" "}
-        only — install AI Elements{" "}
+        Uses the browser Web Speech API in Chrome/Edge — free, no API keys or
+        tokens from Layish. Optional Whisper via{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono">
-          SpeechInput
+          onAudioRecorded
         </code>{" "}
-        when you want voice. No API key required in Chrome/Edge.
+        is host-paid if you add it.
       </p>
       {demo.last ? (
         <p className="text-sm text-muted-foreground">{demo.last}</p>
@@ -289,7 +326,7 @@ export function ComposerUseChatPreview() {
   return (
     <div className="flex w-full max-w-xl flex-col gap-4">
       <Composer
-        form="compact"
+        form="auto"
         value={text}
         onValueChange={setText}
         status={status}
@@ -316,7 +353,9 @@ export function ComposerUseChatPreview() {
           }, 200)
         }}
         modeSlot={
-          <span className="px-2 text-sm text-muted-foreground">Ask</span>
+          <span className="inline-flex h-8 items-center rounded-full bg-sky-500/15 px-2.5 text-xs font-medium text-sky-800 dark:text-sky-200">
+            Ask
+          </span>
         }
       />
       <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs">

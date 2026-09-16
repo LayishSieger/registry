@@ -2,7 +2,7 @@ import { registryInstallCommand, siteConfig } from "@/lib/site"
 
 export const composerTitle = "Composer"
 export const composerDescription =
-  "A two-form prompt shell on input-group — compact pill or expanded auto-grow — with mode and mic slots shaped for AI SDK useChat."
+  "A prompt shell on input-group that starts as a compact pill and expands when text wraps — with mode and mic slots shaped for AI SDK useChat."
 
 export const composerInstallCommand = registryInstallCommand("composer")
 
@@ -15,7 +15,7 @@ export function Example() {
 
   return (
     <Composer
-      form="compact"
+      form="auto"
       value={text}
       onValueChange={setText}
       status="ready"
@@ -40,7 +40,7 @@ export function Example() {
 
   return (
     <Composer
-      form="compact"
+      form="auto"
       value={text}
       onValueChange={setText}
       micSlot={({ disabled }) => (
@@ -88,16 +88,19 @@ Pass \`status\` / \`onStop\` / \`onSubmit\` from the host. The block does not de
 
 ## Forms
 
-- \`form="compact"\` — one-line pill (screenshot language): circular +, mode slot, mic slot, circular ↑ send.
-- \`form="expanded"\` — auto-growing textarea; toolbar on \`block-end\` (attach left, mode/mic/send right). Shift+Enter inserts a newline.
+- \`form="auto"\` (default) — start as a one-line pill. Expand smoothly when text wraps or Shift+Enter inserts a newline. Enter always sends.
+- \`form="compact"\` — prefer one line; expands only after a newline (Shift+Enter).
+- \`form="expanded"\` — always multi-line; Shift+Enter = newline; Enter sends.
+
+Layout: attach + mode on the start; mic + circular ↑ send on the end. In expanded form the toolbar sits on \`block-end\`.
 
 ## Enter key
 
-Default \`enterKeyBehavior="submit"\` sends on Enter. Set \`enterKeyBehavior="focus-send"\` so the first Enter focuses the send button and the second Enter sends.
+Default \`enterKeyBehavior="submit"\` sends on Enter. Shift+Enter inserts a newline (and expands in \`auto\` / \`compact\`). Set \`enterKeyBehavior="focus-send"\` so the first Enter focuses the send button and the second Enter sends.
 
 ## Slots
 
-- \`modeSlot\` — purpose modes (Ask / Plan / Debug). Host owns content and behavior. Not a built-in model picker.
+- \`modeSlot\` — purpose modes (Ask / Plan / Debug). Host owns content, behavior, and styling (e.g. colored mode pills). Not a built-in model picker.
 - \`micSlot\` — visual slot only in the registry block. Pass \`null\` to hide the default mic affordance. Wire voice yourself (see SpeechInput below).
 - \`attachSlot\` — replace the default + file picker. Default attach selects files and includes them on \`onSubmit({ files })\`.
 
@@ -113,7 +116,7 @@ npx ai-elements@latest add speech-input
 ${composerSpeechUsage}
 \`\`\`
 
-In Chrome/Edge, SpeechInput uses the Web Speech API — no API keys. For Firefox/Safari, optionally provide \`onAudioRecorded\` (e.g. Whisper); that path is host/docs-only.
+**Billing:** In Chrome/Edge, SpeechInput uses the browser **Web Speech API** — free for the end user, no Layish tokens, no OpenAI/Vercel keys. Recognition runs in the browser (Chrome often routes speech through Google's service under the browser's terms). For Firefox/Safari, optionally provide \`onAudioRecorded\` (e.g. Whisper); that path is paid by whoever owns the transcription API key.
 
 ## AI SDK
 
@@ -147,12 +150,12 @@ While \`status\` is \`submitted\` or \`streaming\`, the primary control becomes 
 | \`onSubmit\` | \`(message: ComposerSubmit) => void\` | — | Send payload for \`sendMessage\`. |
 | \`status\` | \`"ready" \\| "submitted" \\| "streaming" \\| "error"\` | \`"ready"\` | Drives send vs stop. |
 | \`onStop\` | \`() => void\` | — | Called when stop is pressed while busy. |
-| \`form\` | \`"compact" \\| "expanded"\` | \`"compact"\` | Visual form. |
+| \`form\` | \`"auto" \\| "compact" \\| "expanded"\` | \`"auto"\` | Layout mode. |
 | \`enterKeyBehavior\` | \`"submit" \\| "focus-send"\` | \`"submit"\` | Enter in the field. |
 | \`modeSlot\` | \`ReactNode \\| (props) => ReactNode\` | — | Purpose mode control. |
 | \`micSlot\` | \`ReactNode \\| (props) => ReactNode\` | default mic | Voice affordance slot. \`null\` hides it. |
 | \`attachSlot\` | \`ReactNode \\| (props) => ReactNode\` | default + | Attach control. |
-| \`placeholder\` | \`string\` | \`"Message…"\` | Field placeholder. |
+| \`placeholder\` | \`string\` | \`"Ask anything…"\` | Field placeholder. |
 | \`disabled\` | \`boolean\` | \`false\` | Disable the shell. |
 | \`className\` | \`string\` | — | Classes on the input-group shell. |
 | \`accept\` / \`multiple\` | file input attrs | \`multiple\` true | Default attach picker. |
