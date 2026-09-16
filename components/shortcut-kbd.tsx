@@ -1,11 +1,9 @@
 "use client"
 
-import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import {
-  formatShortcutLabel,
-  shortcutParts,
-  useModKey,
-} from "@/hooks/use-mod-key"
+  ComposerShortcutKbd,
+} from "@/registry/new-york/blocks/composer/composer"
+import { useModKey } from "@/hooks/use-mod-key"
 import { cn } from "@/lib/utils"
 
 export function ShortcutKbd({
@@ -17,18 +15,20 @@ export function ShortcutKbd({
   className?: string
 }) {
   const modKey = useModKey()
-  const parts = shortcutParts(shortcut, modKey)
 
   return (
-    <KbdGroup className={cn("align-middle", className)}>
-      {parts.map((part, index) => (
-        <Kbd key={`${shortcut}-${index}-${part}`}>{part}</Kbd>
-      ))}
-    </KbdGroup>
+    <ComposerShortcutKbd
+      shortcut={shortcut}
+      modKey={modKey}
+      className={cn(className)}
+    />
   )
 }
 
 export function useShortcutLabel(shortcut: string) {
   const modKey = useModKey()
-  return formatShortcutLabel(shortcut, modKey)
+  return shortcut
+    .split("+")
+    .map((part) => (part === "Mod" ? modKey : part))
+    .join("+")
 }

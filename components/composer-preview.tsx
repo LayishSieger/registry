@@ -12,18 +12,13 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ShortcutKbd, useShortcutLabel } from "@/components/shortcut-kbd"
 import { InputGroupButton } from "@/components/ui/input-group"
-import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { cn } from "@/lib/utils"
 import type {
   ComposerStatus,
   ComposerSubmit,
 } from "@/registry/new-york/blocks/composer/composer"
-import {
-  COMPOSER_SHORTCUTS,
-  Composer,
-} from "@/registry/new-york/blocks/composer/composer"
+import { Composer } from "@/registry/new-york/blocks/composer/composer"
 
 const MODES = [
   {
@@ -62,7 +57,6 @@ function ModeSelect({
   disabled?: boolean
 }) {
   const mode = MODES.find((entry) => entry.value === value) ?? MODES[3]
-  const modeShortcut = useShortcutLabel(COMPOSER_SHORTCUTS.mode)
 
   return (
     <DropdownMenu>
@@ -73,7 +67,6 @@ function ModeSelect({
           variant="ghost"
           disabled={disabled}
           data-composer-action="mode"
-          title={`Change mode (${modeShortcut})`}
           className={cn(
             "h-8 gap-1 rounded-full border-0 px-2.5 text-xs font-medium shadow-none",
             mode.className,
@@ -195,40 +188,6 @@ export function ComposerDefaultPreview() {
           />
         )}
       />
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <Kbd>Enter</Kbd>
-          <span>sends</span>
-        </span>
-        <span aria-hidden>·</span>
-        <span className="inline-flex items-center gap-1">
-          <KbdGroup>
-            <Kbd>Shift</Kbd>
-            <Kbd>Enter</Kbd>
-          </KbdGroup>
-          <span>newline</span>
-        </span>
-        <span aria-hidden>·</span>
-        <span className="inline-flex items-center gap-1">
-          <ShortcutKbd shortcut={COMPOSER_SHORTCUTS.attach} />
-          <span>attach</span>
-        </span>
-        <span aria-hidden>·</span>
-        <span className="inline-flex items-center gap-1">
-          <ShortcutKbd shortcut={COMPOSER_SHORTCUTS.mode} />
-          <span>mode</span>
-        </span>
-        <span aria-hidden>·</span>
-        <span className="inline-flex items-center gap-1">
-          <ShortcutKbd shortcut={COMPOSER_SHORTCUTS.dictation} />
-          <span>voice</span>
-        </span>
-        <span aria-hidden>·</span>
-        <span className="inline-flex items-center gap-1">
-          <ShortcutKbd shortcut={COMPOSER_SHORTCUTS.send} />
-          <span>send</span>
-        </span>
-      </p>
       {demo.last ? (
         <p className="text-sm text-muted-foreground">{demo.last}</p>
       ) : null}
@@ -274,7 +233,10 @@ function appendTranscript(current: string, transcript: string) {
 export function ComposerSpeechInputPreview() {
   const demo = useComposerDemo("debug")
   const textRef = React.useRef(demo.text)
-  textRef.current = demo.text
+
+  React.useEffect(() => {
+    textRef.current = demo.text
+  }, [demo.text])
 
   return (
     <PreviewShell title="SpeechInput in micSlot">

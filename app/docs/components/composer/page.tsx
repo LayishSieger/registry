@@ -266,6 +266,13 @@ export default function ComposerPage() {
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
+                    shortcutTooltips
+                  </td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">true</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">
                     modeSlot / micSlot / attachSlot
                   </td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">

@@ -1,7 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { ArrowUpIcon, MicIcon, PlusIcon, SquareIcon } from "lucide-react"
+import {
+  ArrowBigUpIcon,
+  ArrowUpIcon,
+  CornerDownLeftIcon,
+  MicIcon,
+  PlusIcon,
+  SquareIcon,
+} from "lucide-react"
 
 import {
   InputGroup,
@@ -9,6 +16,13 @@ import {
   InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group"
+import { Kbd, KbdGroup } from "@/components/ui/kbd"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 export type ComposerSubmit = {
@@ -53,6 +67,12 @@ export type ComposerProps = {
   onFilesChange?: (files: File[]) => void
   /** Enable built-in keyboard shortcuts. Default true. */
   shortcuts?: boolean
+  /**
+   * Show Kbd shortcut tooltips on attach / mode / mic / send.
+   * Default true. Only applies when `shortcuts` is also enabled —
+   * set `shortcutTooltips={false}` to keep bindings without hover hints.
+   */
+  shortcutTooltips?: boolean
 }
 
 export const COMPOSER_SHORTCUTS = {
@@ -81,24 +101,92 @@ function isMod(event: KeyboardEvent | React.KeyboardEvent) {
   return event.metaKey || event.ctrlKey
 }
 
-function useModKeyLabel() {
-  const [modKey, setModKey] = React.useState<"⌘" | "Ctrl">("Ctrl")
-
-  React.useEffect(() => {
-    const apple =
-      /Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
-      /Mac OS|Macintosh/.test(navigator.userAgent)
-    setModKey(apple ? "⌘" : "Ctrl")
-  }, [])
-
-  return modKey
+function readModKey(): "⌘" | "Ctrl" {
+  const apple =
+    /Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
+    /Mac OS|Macintosh/.test(navigator.userAgent)
+  return apple ? "⌘" : "Ctrl"
 }
 
-function formatShortcut(shortcut: string, modKey: string) {
+function useModKey() {
+  return React.useSyncExternalStore(
+    () => () => {},
+    readModKey,
+    () => "Ctrl" as const,
+  )
+}
+
+function formatShortcutLabel(shortcut: string, modKey: string) {
   return shortcut
     .split("+")
     .map((part) => (part === "Mod" ? modKey : part))
     .join("+")
+}
+
+function ShortcutKey({ part }: { part: string }) {
+  if (part === "Shift") {
+    return (
+      <Kbd>
+        <ArrowBigUpIcon aria-label="Shift" />
+      </Kbd>
+    )
+  }
+  if (part === "Enter") {
+    return (
+      <Kbd>
+        <CornerDownLeftIcon aria-label="Enter" />
+      </Kbd>
+    )
+  }
+  return <Kbd>{part}</Kbd>
+}
+
+export function ComposerShortcutKbd({
+  shortcut,
+  modKey,
+  className,
+}: {
+  shortcut: string
+  modKey: string
+  className?: string
+}) {
+  const parts = shortcut
+    .split("+")
+    .map((part) => (part === "Mod" ? modKey : part))
+
+  return (
+    <KbdGroup className={cn("align-middle", className)}>
+      {parts.map((part, index) => (
+        <ShortcutKey key={`${shortcut}-${index}-${part}`} part={part} />
+      ))}
+    </KbdGroup>
+  )
+}
+
+function ShortcutTooltip({
+  enabled,
+  label,
+  shortcut,
+  modKey,
+  children,
+}: {
+  enabled: boolean
+  label: string
+  shortcut: string
+  modKey: string
+  children: React.ReactElement
+}) {
+  if (!enabled) return children
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent className="flex items-center gap-2">
+        {label}
+        <ComposerShortcutKbd shortcut={shortcut} modKey={modKey} />
+      </TooltipContent>
+    </Tooltip>
+  )
 }
 
 function DefaultMicButton({ disabled }: { disabled?: boolean }) {
@@ -135,8 +223,10 @@ export function Composer({
   multiple = true,
   onFilesChange,
   shortcuts = true,
+  shortcutTooltips = true,
 }: ComposerProps) {
-  const modKey = useModKeyLabel()
+  const modKey = useModKey()
+  const showShortcutTooltips = shortcuts && shortcutTooltips
   const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue)
   const isControlled = valueProp != null
   const value = isControlled ? valueProp : uncontrolledValue
@@ -290,7 +380,8 @@ export function Composer({
     ) : (
       resolveSlot(micSlot, slotProps)
     )
-  const resolvedAttach =
+
+  const attachControl =
     attachSlot === undefined ? (
       <InputGroupButton
         type="button"
@@ -299,7 +390,6 @@ export function Composer({
         disabled={slotProps.disabled}
         aria-label="Attach files"
         data-composer-action="attach"
-        title={`Attach (${formatShortcut(COMPOSER_SHORTCUTS.attach, modKey)})`}
         className={cn(
           CIRCLE_BTN,
           "border-border bg-background dark:bg-background",
@@ -314,88 +404,139 @@ export function Composer({
 
   const primaryLabel = busy ? "Stop generating" : "Send message"
   const primaryDisabled = disabled || (!busy && !canSubmit)
-  const sendShortcut = formatShortcut(COMPOSER_SHORTCUTS.send, modKey)
+  const sendShortcut = formatShortcutLabel(COMPOSER_SHORTCUTS.send, modKey)
+
+  const sendControl = (
+    <InputGroupButton
+      ref={sendButtonRef}
+      type="button"
+      size="icon-sm"
+      variant="default"
+      disabled={primaryDisabled}
+      aria-label={primaryLabel}
+      data-composer-action="send"
+      className={cn(
+        CIRCLE_BTN,
+        "bg-foreground text-background hover:bg-foreground/90",
+        "disabled:opacity-40",
+      )}
+      onClick={handlePrimaryAction}
+    >
+      {busy ? (
+        <SquareIcon className="size-3.5 fill-current" />
+      ) : (
+        <ArrowUpIcon />
+      )}
+    </InputGroupButton>
+  )
 
   return (
-    <div ref={rootRef} className="flex w-full flex-col gap-2">
-      {files.length > 0 ? (
-        <p className="px-1 text-xs text-muted-foreground">
-          {files.length} file{files.length === 1 ? "" : "s"} attached
-        </p>
-      ) : null}
-      <InputGroup
-        className={cn(
-          "w-full rounded-[1.75rem] border-border/70 bg-muted/40 shadow-none dark:bg-muted/50",
-          // Subtle focus — thin soft ring instead of a loud glow
-          "has-[[data-slot=input-group-control]:focus-visible]:border-ring/60",
-          "has-[[data-slot=input-group-control]:focus-visible]:ring-1",
-          "has-[[data-slot=input-group-control]:focus-visible]:ring-ring/25",
-          className,
-        )}
-        data-disabled={disabled || undefined}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="sr-only"
-          tabIndex={-1}
-          accept={accept}
-          multiple={multiple}
-          disabled={disabled || busy}
-          onChange={(event) => {
-            const list = event.currentTarget.files
-            setSelectedFiles(list ? Array.from(list) : [])
-          }}
-        />
-        <InputGroupTextarea
-          value={value}
-          disabled={disabled || busy}
-          placeholder={placeholder}
-          rows={1}
-          aria-keyshortcuts={`Enter ${sendShortcut} Shift+Enter`}
-          className="field-sizing-content max-h-48 min-h-12 resize-none px-4 pt-3.5 pb-2 text-sm"
-          onChange={(event) => setValue(event.currentTarget.value)}
-          onKeyDown={handleEnterKey}
-        />
-        <InputGroupAddon
-          align="block-end"
-          className="justify-between gap-2 px-1.5 pb-1.5 pt-0"
+    <TooltipProvider delayDuration={200}>
+      <div ref={rootRef} className="flex w-full flex-col gap-2">
+        {files.length > 0 ? (
+          <p className="px-1 text-xs text-muted-foreground">
+            {files.length} file{files.length === 1 ? "" : "s"} attached
+          </p>
+        ) : null}
+        <InputGroup
+          className={cn(
+            "w-full rounded-[1.75rem] border-border/70 bg-muted/40 shadow-none dark:bg-muted/50",
+            // Subtle focus — thin soft ring instead of a loud glow
+            "has-[[data-slot=input-group-control]:focus-visible]:border-ring/60",
+            "has-[[data-slot=input-group-control]:focus-visible]:ring-1",
+            "has-[[data-slot=input-group-control]:focus-visible]:ring-ring/25",
+            className,
+          )}
+          data-disabled={disabled || undefined}
         >
-          <div className="flex items-center gap-1.5">
-            {resolvedAttach}
-            <span data-composer-action="mode" className="contents">
-              {resolvedMode}
-            </span>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5">
-            <span data-composer-action="dictation" className="contents">
-              {resolvedMic}
-            </span>
-            <InputGroupButton
-              ref={sendButtonRef}
-              type="button"
-              size="icon-sm"
-              variant="default"
-              disabled={primaryDisabled}
-              aria-label={primaryLabel}
-              data-composer-action="send"
-              title={`${primaryLabel} (${sendShortcut})`}
-              className={cn(
-                CIRCLE_BTN,
-                "bg-foreground text-background hover:bg-foreground/90",
-                "disabled:opacity-40",
-              )}
-              onClick={handlePrimaryAction}
-            >
-              {busy ? (
-                <SquareIcon className="size-3.5 fill-current" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="sr-only"
+            tabIndex={-1}
+            accept={accept}
+            multiple={multiple}
+            disabled={disabled || busy}
+            onChange={(event) => {
+              const list = event.currentTarget.files
+              setSelectedFiles(list ? Array.from(list) : [])
+            }}
+          />
+          <InputGroupTextarea
+            value={value}
+            disabled={disabled || busy}
+            placeholder={placeholder}
+            rows={1}
+            aria-keyshortcuts={`Enter ${sendShortcut} Shift+Enter`}
+            className="field-sizing-content max-h-48 min-h-12 resize-none px-4 pt-3.5 pb-2 text-sm"
+            onChange={(event) => setValue(event.currentTarget.value)}
+            onKeyDown={handleEnterKey}
+          />
+          <InputGroupAddon
+            align="block-end"
+            className="justify-between gap-2 px-1.5 pb-1.5 pt-0"
+          >
+            <div className="flex items-center gap-1.5">
+              {attachSlot === undefined ? (
+                <ShortcutTooltip
+                  enabled={showShortcutTooltips}
+                  label="Attach"
+                  shortcut={COMPOSER_SHORTCUTS.attach}
+                  modKey={modKey}
+                >
+                  {attachControl as React.ReactElement}
+                </ShortcutTooltip>
               ) : (
-                <ArrowUpIcon />
+                attachControl
               )}
-            </InputGroupButton>
-          </div>
-        </InputGroupAddon>
-      </InputGroup>
-    </div>
+              {resolvedMode != null ? (
+                <ShortcutTooltip
+                  enabled={showShortcutTooltips}
+                  label="Mode"
+                  shortcut={COMPOSER_SHORTCUTS.mode}
+                  modKey={modKey}
+                >
+                  <span
+                    data-composer-action="mode"
+                    className="inline-flex"
+                  >
+                    {resolvedMode}
+                  </span>
+                </ShortcutTooltip>
+              ) : null}
+            </div>
+            <div className="ml-auto flex items-center gap-1.5">
+              {resolvedMic != null ? (
+                <ShortcutTooltip
+                  enabled={showShortcutTooltips}
+                  label="Dictation"
+                  shortcut={COMPOSER_SHORTCUTS.dictation}
+                  modKey={modKey}
+                >
+                  <span
+                    data-composer-action="dictation"
+                    className="inline-flex"
+                  >
+                    {resolvedMic}
+                  </span>
+                </ShortcutTooltip>
+              ) : null}
+              <ShortcutTooltip
+                enabled={showShortcutTooltips}
+                label={busy ? "Stop" : "Send"}
+                shortcut={COMPOSER_SHORTCUTS.send}
+                modKey={modKey}
+              >
+                {primaryDisabled ? (
+                  <span className="inline-flex">{sendControl}</span>
+                ) : (
+                  sendControl
+                )}
+              </ShortcutTooltip>
+            </div>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </TooltipProvider>
   )
 }

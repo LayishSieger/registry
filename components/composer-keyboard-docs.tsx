@@ -1,8 +1,12 @@
 "use client"
 
 import { ShortcutKbd } from "@/components/shortcut-kbd"
-import { Kbd, KbdGroup } from "@/components/ui/kbd"
-import { COMPOSER_SHORTCUTS } from "@/registry/new-york/blocks/composer/composer"
+import { Kbd } from "@/components/ui/kbd"
+import {
+  ComposerShortcutKbd,
+  COMPOSER_SHORTCUTS,
+} from "@/registry/new-york/blocks/composer/composer"
+import { useModKey } from "@/hooks/use-mod-key"
 
 const ROWS = [
   { shortcut: COMPOSER_SHORTCUTS.attach, action: "Attach" },
@@ -11,6 +15,8 @@ const ROWS = [
 ] as const
 
 export function ComposerKeyboardDocs() {
+  const modKey = useModKey()
+
   return (
     <>
       <div className="overflow-x-auto">
@@ -33,7 +39,7 @@ export function ComposerKeyboardDocs() {
             <tr className="border-b">
               <td className="py-2 pr-4 text-foreground">
                 <span className="inline-flex items-center gap-1">
-                  <Kbd>Enter</Kbd>
+                  <ComposerShortcutKbd shortcut="Enter" modKey={modKey} />
                   <span className="text-muted-foreground">/</span>
                   <ShortcutKbd shortcut={COMPOSER_SHORTCUTS.send} />
                 </span>
@@ -42,10 +48,10 @@ export function ComposerKeyboardDocs() {
             </tr>
             <tr>
               <td className="py-2 pr-4 text-foreground">
-                <KbdGroup>
-                  <Kbd>Shift</Kbd>
-                  <Kbd>Enter</Kbd>
-                </KbdGroup>
+                <ComposerShortcutKbd
+                  shortcut="Shift+Enter"
+                  modKey={modKey}
+                />
               </td>
               <td className="py-2">Newline</td>
             </tr>
@@ -53,11 +59,20 @@ export function ComposerKeyboardDocs() {
         </table>
       </div>
       <p className="text-sm text-muted-foreground">
-        Modifier is <Kbd>⌘</Kbd> on macOS and <Kbd>Ctrl</Kbd> elsewhere. Set{" "}
+        Modifier is <Kbd>⌘</Kbd> on macOS and <Kbd>Ctrl</Kbd> elsewhere.
+        Shortcuts show as tooltips on the composer controls when{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+          shortcutTooltips
+        </code>{" "}
+        is enabled (default). Set{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
           shortcuts=&#123;false&#125;
         </code>{" "}
-        to disable.
+        to disable bindings and tooltips, or{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+          shortcutTooltips=&#123;false&#125;
+        </code>{" "}
+        to keep bindings without hover hints.
       </p>
     </>
   )

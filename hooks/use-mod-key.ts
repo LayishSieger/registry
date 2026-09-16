@@ -2,18 +2,20 @@
 
 import * as React from "react"
 
+function readModKey(): "⌘" | "Ctrl" {
+  const apple =
+    /Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
+    /Mac OS|Macintosh/.test(navigator.userAgent)
+  return apple ? "⌘" : "Ctrl"
+}
+
 /** ⌘ on Apple platforms, Ctrl elsewhere. */
 export function useModKey() {
-  const [modKey, setModKey] = React.useState<"⌘" | "Ctrl">("Ctrl")
-
-  React.useEffect(() => {
-    const apple =
-      /Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
-      /Mac OS|Macintosh/.test(navigator.userAgent)
-    setModKey(apple ? "⌘" : "Ctrl")
-  }, [])
-
-  return modKey
+  return React.useSyncExternalStore(
+    () => () => {},
+    readModKey,
+    () => "Ctrl" as const,
+  )
 }
 
 /** Turn `Mod+Shift+A` into display parts with a real modifier key. */
