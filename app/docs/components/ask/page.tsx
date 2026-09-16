@@ -13,6 +13,7 @@ import {
   AskHitlPreview,
   AskReviewPreview,
 } from "@/components/ask-preview"
+import { AskKeyboardDocs } from "@/components/ask-keyboard-docs"
 import { RegistryExample } from "@/components/registry-example"
 import { askToc } from "@/lib/docs"
 import {
@@ -149,6 +150,10 @@ export default function AskPage() {
           </RegistryExample>
         </section>
         <section className="flex flex-col gap-3">
+          <Heading id="keyboard">Keyboard</Heading>
+          <AskKeyboardDocs />
+        </section>
+        <section className="flex flex-col gap-3">
           <Heading id="ai-sdk-hitl">AI SDK HITL</Heading>
           <p className="text-sm text-muted-foreground">
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
@@ -201,6 +206,11 @@ export default function AskPage() {
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">shortcuts</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">&quot;numbers&quot; | &quot;letters&quot; | false</td>
                   <td className="py-2 font-mono text-[0.8rem]">&quot;numbers&quot;</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">shortcutTooltips</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">true</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">autoAdvanceDelay</td>
