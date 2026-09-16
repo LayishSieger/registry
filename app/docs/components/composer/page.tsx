@@ -7,6 +7,7 @@ import {
   ComposerCompactPreview,
   ComposerExpandedPreview,
   ComposerFocusSendPreview,
+  ComposerSpeechInputPreview,
   ComposerUseChatPreview,
 } from "@/components/composer-preview"
 import { CopyCommand } from "@/components/copy-command"
@@ -18,6 +19,7 @@ import {
   composerDescription,
   composerInstallCommand,
   composerMarkdown,
+  composerSpeechUsage,
   composerTitle,
   composerUsage,
 } from "@/lib/docs/composer"
@@ -153,6 +155,43 @@ export default function ComposerPage() {
           </p>
           <RegistryExample>
             <ComposerFocusSendPreview />
+          </RegistryExample>
+        </section>
+        <section className="flex flex-col gap-3">
+          <Heading id="speech-input">SpeechInput</Heading>
+          <p className="text-sm text-muted-foreground">
+            The registry block keeps{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              micSlot
+            </code>{" "}
+            only — no AI Elements dependency. Install{" "}
+            <Link
+              href={siteConfig.links.speechInput}
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              SpeechInput
+            </Link>{" "}
+            from{" "}
+            <Link
+              href={siteConfig.links.aiElements}
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              AI Elements
+            </Link>{" "}
+            when you want voice, then compose via the slot. Chrome/Edge use the
+            Web Speech API (no API key).{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              onAudioRecorded
+            </code>{" "}
+            (Whisper/etc.) is optional for Firefox/Safari.
+          </p>
+          <CopyCommand command="npx ai-elements@latest add speech-input" />
+          <CodeBlock code={composerSpeechUsage} />
+          <RegistryExample
+            title="SpeechInput in micSlot"
+            description="Appends final transcripts into the composer value."
+          >
+            <ComposerSpeechInputPreview />
           </RegistryExample>
         </section>
         <section className="flex flex-col gap-3">

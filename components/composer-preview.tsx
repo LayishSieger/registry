@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { InputGroupButton } from "@/components/ui/input-group"
+import { SpeechInput } from "@/components/ai-elements/speech-input"
 import type {
   ComposerStatus,
   ComposerSubmit,
@@ -209,6 +210,63 @@ export function ComposerFocusSendPreview() {
           />
         )}
       />
+      {demo.last ? (
+        <p className="text-sm text-muted-foreground">{demo.last}</p>
+      ) : null}
+    </PreviewShell>
+  )
+}
+
+function appendTranscript(current: string, transcript: string) {
+  const next = transcript.trim()
+  if (!next) return current
+  const base = current.trim()
+  return base ? `${base} ${next}` : next
+}
+
+export function ComposerSpeechInputPreview() {
+  const demo = useComposerDemo()
+  const textRef = React.useRef(demo.text)
+  textRef.current = demo.text
+
+  return (
+    <PreviewShell title="SpeechInput in micSlot">
+      <Composer
+        form="compact"
+        value={demo.text}
+        onValueChange={demo.setText}
+        status={demo.status}
+        onStop={demo.handleStop}
+        onSubmit={demo.handleSubmit}
+        placeholder="Click the mic — Web Speech API in Chrome/Edge"
+        modeSlot={({ disabled }) => (
+          <ModeSelect
+            value={demo.mode}
+            onValueChange={demo.setMode}
+            disabled={disabled}
+          />
+        )}
+        micSlot={({ disabled }) => (
+          <SpeechInput
+            size="icon-sm"
+            variant="ghost"
+            disabled={disabled}
+            aria-label="Voice input"
+            onTranscriptionChange={(transcript) => {
+              demo.setText(appendTranscript(textRef.current, transcript))
+            }}
+          />
+        )}
+      />
+      <p className="text-xs text-muted-foreground">
+        Docs-only demo. Composer keeps{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono">micSlot</code>{" "}
+        only — install AI Elements{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono">
+          SpeechInput
+        </code>{" "}
+        when you want voice. No API key required in Chrome/Edge.
+      </p>
       {demo.last ? (
         <p className="text-sm text-muted-foreground">{demo.last}</p>
       ) : null}

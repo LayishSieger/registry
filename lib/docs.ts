@@ -48,6 +48,7 @@ export const composerToc: DocsTocItem[] = [
   { title: "Usage", url: "#usage" },
   { title: "Forms", url: "#forms" },
   { title: "Enter key", url: "#enter-key" },
+  { title: "SpeechInput", url: "#speech-input" },
   { title: "AI SDK", url: "#ai-sdk" },
   { title: "API", url: "#api" },
 ]

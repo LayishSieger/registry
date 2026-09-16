@@ -31,6 +31,37 @@ export function Example() {
   )
 }`
 
+export const composerSpeechUsage = `import { useState } from "react"
+import { Composer } from "@/components/composer"
+import { SpeechInput } from "@/components/ai-elements/speech-input"
+
+export function Example() {
+  const [text, setText] = useState("")
+
+  return (
+    <Composer
+      form="compact"
+      value={text}
+      onValueChange={setText}
+      micSlot={({ disabled }) => (
+        <SpeechInput
+          size="icon-sm"
+          variant="ghost"
+          disabled={disabled}
+          onTranscriptionChange={(transcript) => {
+            const next = transcript.trim()
+            if (!next) return
+            setText((current) => {
+              const base = current.trim()
+              return base ? \`\${base} \${next}\` : next
+            })
+          }}
+        />
+      )}
+    />
+  )
+}`
+
 export const composerMarkdown = `# ${composerTitle}
 
 ${composerDescription}
@@ -67,8 +98,22 @@ Default \`enterKeyBehavior="submit"\` sends on Enter. Set \`enterKeyBehavior="fo
 ## Slots
 
 - \`modeSlot\` — purpose modes (Ask / Plan / Debug). Host owns content and behavior. Not a built-in model picker.
-- \`micSlot\` — visual slot only in v1. Pass \`null\` to hide the default mic affordance.
+- \`micSlot\` — visual slot only in the registry block. Pass \`null\` to hide the default mic affordance. Wire voice yourself (see SpeechInput below).
 - \`attachSlot\` — replace the default + file picker. Default attach selects files and includes them on \`onSubmit({ files })\`.
+
+## SpeechInput (optional)
+
+Composer does **not** depend on AI Elements. For voice, install [SpeechInput](${siteConfig.links.speechInput}) and pass it into \`micSlot\`:
+
+\`\`\`bash
+npx ai-elements@latest add speech-input
+\`\`\`
+
+\`\`\`tsx
+${composerSpeechUsage}
+\`\`\`
+
+In Chrome/Edge, SpeechInput uses the Web Speech API — no API keys. For Firefox/Safari, optionally provide \`onAudioRecorded\` (e.g. Whisper); that path is host/docs-only.
 
 ## AI SDK
 

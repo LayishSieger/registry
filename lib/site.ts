@@ -7,6 +7,8 @@ export const siteConfig = {
     shadcnRegistry: "https://ui.shadcn.com/docs/registry",
     questionnaire: "https://ui.shadcn.com/docs/components/base/questionnaire",
     inputGroup: "https://ui.shadcn.com/docs/components/base/input-group",
+    speechInput: "https://elements.ai-sdk.dev/components/speech-input",
+    aiElements: "https://elements.ai-sdk.dev",
   },
   navItems: [
     { href: "/", label: "Home" },
