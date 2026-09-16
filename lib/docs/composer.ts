@@ -90,13 +90,13 @@ Enter sends. Shift+Enter inserts a newline. Attach + mode sit on the start of th
 
 | Shortcut | Action |
 | --- | --- |
-| \`Mod\` \`Shift\` \`A\` | Attach |
-| \`Mod\` \`/\` | Mode |
-| \`Mod\` \`Shift\` \`D\` | Dictation / mic slot |
-| \`Enter\` / \`Mod\` \`Enter\` | Send (or stop when busy) |
-| \`Shift\` \`Enter\` | Newline |
+| ⌘/Ctrl+Shift+A | Attach |
+| ⌘/Ctrl+/ | Mode |
+| ⌘/Ctrl+Shift+D | Dictation / mic slot |
+| Enter / ⌘/Ctrl+Enter | Send (or stop when busy) |
+| Shift+Enter | Newline |
 
-\`Mod\` is ⌘ on macOS and Ctrl elsewhere. Set \`shortcuts={false}\` to disable.
+Modifier is ⌘ on macOS and Ctrl elsewhere. Set \`shortcuts={false}\` to disable.
 
 ## Slots
 

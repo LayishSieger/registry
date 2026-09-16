@@ -13,7 +13,7 @@ import { CopyCommand } from "@/components/copy-command"
 import { DocsPageHeader } from "@/components/docs-page-header"
 import { DocsTableOfContents } from "@/components/docs-toc"
 import { RegistryExample } from "@/components/registry-example"
-import { Kbd, KbdGroup } from "@/components/ui/kbd"
+import { ComposerKeyboardDocs } from "@/components/composer-keyboard-docs"
 import { composerToc } from "@/lib/docs"
 import {
   composerDescription,
@@ -139,74 +139,7 @@ export default function ComposerPage() {
         </section>
         <section className="flex flex-col gap-3">
           <Heading id="keyboard">Keyboard</Heading>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2 pr-4 font-medium">Shortcut</th>
-                  <th className="py-2 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody className="text-muted-foreground">
-                <tr className="border-b">
-                  <td className="py-2 pr-4 text-foreground">
-                    <KbdGroup>
-                      <Kbd>Mod</Kbd>
-                      <Kbd>Shift</Kbd>
-                      <Kbd>A</Kbd>
-                    </KbdGroup>
-                  </td>
-                  <td className="py-2">Attach</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 pr-4 text-foreground">
-                    <KbdGroup>
-                      <Kbd>Mod</Kbd>
-                      <Kbd>/</Kbd>
-                    </KbdGroup>
-                  </td>
-                  <td className="py-2">Mode</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 pr-4 text-foreground">
-                    <KbdGroup>
-                      <Kbd>Mod</Kbd>
-                      <Kbd>Shift</Kbd>
-                      <Kbd>D</Kbd>
-                    </KbdGroup>
-                  </td>
-                  <td className="py-2">Dictation / mic</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 pr-4 text-foreground">
-                    <KbdGroup>
-                      <Kbd>Enter</Kbd>
-                      <span className="text-muted-foreground">/</span>
-                      <Kbd>Mod</Kbd>
-                      <Kbd>Enter</Kbd>
-                    </KbdGroup>
-                  </td>
-                  <td className="py-2">Send (or stop when busy)</td>
-                </tr>
-                <tr>
-                  <td className="py-2 pr-4 text-foreground">
-                    <KbdGroup>
-                      <Kbd>Shift</Kbd>
-                      <Kbd>Enter</Kbd>
-                    </KbdGroup>
-                  </td>
-                  <td className="py-2">Newline</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            <Kbd>Mod</Kbd> is ⌘ on macOS and Ctrl elsewhere. Set{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              shortcuts=&#123;false&#125;
-            </code>{" "}
-            to disable.
-          </p>
+          <ComposerKeyboardDocs />
         </section>
         <section className="flex flex-col gap-3">
           <Heading id="speech-input">SpeechInput</Heading>

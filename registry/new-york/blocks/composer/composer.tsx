@@ -81,6 +81,26 @@ function isMod(event: KeyboardEvent | React.KeyboardEvent) {
   return event.metaKey || event.ctrlKey
 }
 
+function useModKeyLabel() {
+  const [modKey, setModKey] = React.useState<"⌘" | "Ctrl">("Ctrl")
+
+  React.useEffect(() => {
+    const apple =
+      /Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
+      /Mac OS|Macintosh/.test(navigator.userAgent)
+    setModKey(apple ? "⌘" : "Ctrl")
+  }, [])
+
+  return modKey
+}
+
+function formatShortcut(shortcut: string, modKey: string) {
+  return shortcut
+    .split("+")
+    .map((part) => (part === "Mod" ? modKey : part))
+    .join("+")
+}
+
 function DefaultMicButton({ disabled }: { disabled?: boolean }) {
   return (
     <InputGroupButton
@@ -116,6 +136,7 @@ export function Composer({
   onFilesChange,
   shortcuts = true,
 }: ComposerProps) {
+  const modKey = useModKeyLabel()
   const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue)
   const isControlled = valueProp != null
   const value = isControlled ? valueProp : uncontrolledValue
@@ -278,7 +299,7 @@ export function Composer({
         disabled={slotProps.disabled}
         aria-label="Attach files"
         data-composer-action="attach"
-        title={`Attach (${COMPOSER_SHORTCUTS.attach})`}
+        title={`Attach (${formatShortcut(COMPOSER_SHORTCUTS.attach, modKey)})`}
         className={cn(
           CIRCLE_BTN,
           "border-border bg-background dark:bg-background",
@@ -293,6 +314,7 @@ export function Composer({
 
   const primaryLabel = busy ? "Stop generating" : "Send message"
   const primaryDisabled = disabled || (!busy && !canSubmit)
+  const sendShortcut = formatShortcut(COMPOSER_SHORTCUTS.send, modKey)
 
   return (
     <div ref={rootRef} className="flex w-full flex-col gap-2">
@@ -330,7 +352,7 @@ export function Composer({
           disabled={disabled || busy}
           placeholder={placeholder}
           rows={1}
-          aria-keyshortcuts="Enter Mod+Enter Shift+Enter"
+          aria-keyshortcuts={`Enter ${sendShortcut} Shift+Enter`}
           className="field-sizing-content max-h-48 min-h-12 resize-none px-4 pt-3.5 pb-2 text-sm"
           onChange={(event) => setValue(event.currentTarget.value)}
           onKeyDown={handleEnterKey}
@@ -357,7 +379,7 @@ export function Composer({
               disabled={primaryDisabled}
               aria-label={primaryLabel}
               data-composer-action="send"
-              title={`${primaryLabel} (${COMPOSER_SHORTCUTS.send})`}
+              title={`${primaryLabel} (${sendShortcut})`}
               className={cn(
                 CIRCLE_BTN,
                 "bg-foreground text-background hover:bg-foreground/90",
