@@ -32,11 +32,11 @@ export function ComposerKeyboardDocs() {
             ))}
             <tr className="border-b">
               <td className="py-2 pr-4 text-foreground">
-                <KbdGroup>
+                <span className="inline-flex items-center gap-1">
                   <Kbd>Enter</Kbd>
                   <span className="text-muted-foreground">/</span>
                   <ShortcutKbd shortcut={COMPOSER_SHORTCUTS.send} />
-                </KbdGroup>
+                </span>
               </td>
               <td className="py-2">Send (or stop when busy)</td>
             </tr>
