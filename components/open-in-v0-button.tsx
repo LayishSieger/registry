@@ -1,14 +1,28 @@
+"use client"
+
+import { useEffect, useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getSiteUrl } from "@/lib/site"
+
+function buildRegistryItemUrl(base: string, name: string) {
+  return `${base.replace(/\/$/, "")}/r/${name}.json`
+}
 
 export function OpenInV0Button({
   name,
   className,
 }: { name: string } & React.ComponentProps<typeof Button>) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_BASE_URL
+  // Start with the configured public site URL (matches SSR), then switch to the
+  // live origin so preview deployments open their own /r item instead of prod.
+  const [itemUrl, setItemUrl] = useState(() =>
+    buildRegistryItemUrl(getSiteUrl(), name)
+  )
 
-  if (!baseUrl) return null
+  useEffect(() => {
+    setItemUrl(buildRegistryItemUrl(window.location.origin, name))
+  }, [name])
 
   return (
     <Button
@@ -21,7 +35,7 @@ export function OpenInV0Button({
       asChild
     >
       <a
-        href={`https://v0.dev/chat/api/open?url=${baseUrl.replace(/\/$/, "")}/r/${name}.json`}
+        href={`https://v0.dev/chat/api/open?url=${encodeURIComponent(itemUrl)}`}
         target="_blank"
         rel="noreferrer"
       >

@@ -2,6 +2,7 @@ import Link from "next/link"
 
 import { CopyCommand } from "@/components/copy-command"
 import { AskDefaultPreview } from "@/components/ask-preview"
+import { ComposerDefaultPreview } from "@/components/composer-preview"
 import { Button } from "@/components/ui/button"
 import { installCommand, siteConfig } from "@/lib/site"
 
@@ -19,6 +20,9 @@ export default function Home() {
         <CopyCommand command={installCommand} className="max-w-xl" />
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild>
+            <Link href="/docs/components/composer">View Composer</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href="/docs/components/ask">View Ask</Link>
           </Button>
           <Button asChild variant="outline">
@@ -26,6 +30,23 @@ export default function Home() {
               shadcn registry
             </Link>
           </Button>
+        </div>
+      </section>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-end justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-medium">Composer</h2>
+            <p className="text-sm text-muted-foreground">
+              Prompt shell with mode and mic slots. Enter sends; busy status
+              becomes stop.
+            </p>
+          </div>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/docs/components/composer">Docs</Link>
+          </Button>
+        </div>
+        <div className="flex min-h-[280px] items-center justify-center rounded-lg border bg-background p-6">
+          <ComposerDefaultPreview />
         </div>
       </section>
       <section className="flex flex-col gap-3">

@@ -15,6 +15,26 @@
           "type": "registry:block"
         }
       ]
+    },
+    {
+      "name": "composer",
+      "type": "registry:block",
+      "title": "Composer",
+      "description": "A prompt shell on input-group with mode and mic slots for AI SDK useChat.",
+      "registryDependencies": [
+        "input-group",
+        "button",
+        "input",
+        "textarea",
+        "tooltip",
+        "kbd"
+      ],
+      "files": [
+        {
+          "path": "registry/new-york/blocks/composer/composer.tsx",
+          "type": "registry:block"
+        }
+      ]
     }
   ]
 }

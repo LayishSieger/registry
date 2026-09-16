@@ -23,8 +23,11 @@ export function MobileNav({ className }: { className?: string }) {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
+          size="icon-sm"
+          aria-label="Toggle menu"
+          aria-expanded={open}
           className={cn(
-            "h-8 gap-2 px-0 hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 lg:hidden",
+            "size-8 shrink-0 p-2 hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 lg:hidden",
             className,
           )}
         >
@@ -42,8 +45,6 @@ export function MobileNav({ className }: { className?: string }) {
               )}
             />
           </div>
-          <span className="sr-only">Toggle menu</span>
-          <span className="font-medium">Menu</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -55,7 +56,6 @@ export function MobileNav({ className }: { className?: string }) {
       >
         <div className="flex flex-col gap-8 px-6 py-6">
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-muted-foreground">Menu</p>
             {siteConfig.navItems.map((item) => (
               <Link
                 key={item.href}
