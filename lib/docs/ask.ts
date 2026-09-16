@@ -65,6 +65,10 @@ Set \`review\` on the batch. Last-slide auto-advance and Other commit go to revi
 
 Set \`cancel\` on the batch. Confirm before discarding answers.
 
+## Keyboard
+
+Arrow keys navigate. Enter continues or submits. Number (or letter) keys pick choices. Navigation shortcuts appear as tooltips on Previous / Skip / Next / Submit when \`shortcutTooltips\` is enabled (default). Set \`shortcuts={false}\` to disable answer keys and tooltips, or \`shortcutTooltips={false}\` to keep bindings without hover hints.
+
 ## AI SDK HITL
 
 \`onResult\` is the tool output. The host passes it to \`addToolOutput\`.
@@ -83,6 +87,7 @@ Set \`cancel\` on the batch. Confirm before discarding answers.
 | \`onCancel\` | \`() => void\` | — | Called after cancel is confirmed. |
 | \`autoAdvanceDelay\` | \`number\` | \`380\` | Delay in ms before auto-advance. |
 | \`shortcuts\` | \`"numbers" \\| "letters" \\| false\` | \`"numbers"\` | Answer shortcut keys. |
+| \`shortcutTooltips\` | \`boolean\` | \`true\` | Kbd tooltips on Previous / Skip / Next / Submit (requires \`shortcuts\` ≠ \`false\`). |
 | \`labels\` | \`AskLabels\` | — | Override action and cancel copy. |
 | \`defaultItem\` | \`string\` | first item | Uncontrolled starting question. |
 | \`item\` | \`string\` | — | Controlled active question. |

@@ -35,6 +35,7 @@ export const askToc: DocsTocItem[] = [
   { title: "Auto-advance", url: "#auto-advance" },
   { title: "Review", url: "#review" },
   { title: "Cancel", url: "#cancel" },
+  { title: "Keyboard", url: "#keyboard" },
   { title: "AI SDK HITL", url: "#ai-sdk-hitl" },
   { title: "API", url: "#api" },
 ]

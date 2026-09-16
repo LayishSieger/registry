@@ -8,7 +8,14 @@
       "type": "registry:block",
       "title": "Ask",
       "description": "A questionnaire wrap with HITL onResult for AI SDK addToolOutput.",
-      "registryDependencies": ["questionnaire", "card", "button", "popover"],
+      "registryDependencies": [
+        "questionnaire",
+        "card",
+        "button",
+        "popover",
+        "tooltip",
+        "kbd"
+      ],
       "files": [
         {
           "path": "registry/new-york/blocks/ask/ask.tsx",
