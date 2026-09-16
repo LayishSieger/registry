@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import { absoluteUrl } from "@/lib/site"
 
 export function DocsCopyPage({
   markdown,
@@ -28,18 +29,18 @@ export function DocsCopyPage({
   const { copyToClipboard, isCopied } = useCopyToClipboard()
 
   function pageUrl() {
-    if (typeof window === "undefined") return path
-    return `${window.location.origin}${path}`
+    // Prefer the live origin when copying in the browser (preview/prod/local).
+    // Fall back to the configured site base for SSR/non-window contexts.
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}${path}`
+    }
+    return absoluteUrl(path)
   }
 
   function agentPrompt() {
     return `I'm looking at this documentation: ${pageUrl()}
 
-Help me understand how to use it. Be ready to explain concepts, give examples, or help debug based on it.
-
----
-
-${markdown}`
+Help me understand how to use it. Be ready to explain concepts, give examples, or help debug based on it.`
   }
 
   function copyPrompt() {
