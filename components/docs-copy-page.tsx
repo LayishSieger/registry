@@ -51,12 +51,12 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
     <div className="relative flex w-fit items-stretch rounded-lg bg-secondary">
       <Button
         variant="secondary"
-        size="sm"
-        className="h-8 shadow-none md:h-7 md:text-[0.8rem]"
+        size="icon-sm"
+        className="size-8 px-2 shadow-none md:size-7"
         onClick={() => copyToClipboard(markdown)}
+        aria-label={isCopied ? "Copied page" : "Copy page"}
       >
-        {isCopied ? <CheckIcon data-icon="inline-start" /> : <CopyIcon data-icon="inline-start" />}
-        Copy Page
+        {isCopied ? <CheckIcon /> : <CopyIcon />}
       </Button>
       <Separator
         orientation="vertical"
@@ -67,10 +67,10 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
           <Button
             variant="secondary"
             size="icon-sm"
-            className="size-8 shadow-none md:size-7"
+            className="group size-8 px-2 shadow-none md:size-7"
             aria-label="Copy page options"
           >
-            <ChevronDownIcon />
+            <ChevronDownIcon className="transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-48">

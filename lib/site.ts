@@ -29,7 +29,14 @@ export function registryInstallCommand(item: string) {
 export const installCommand = registryInstallCommand(githubRegistry.item)
 
 export function getSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL
+  }
+  // Preview / production deployment URL when the public site env is unset.
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  return "http://localhost:3000"
 }
 
 export function absoluteUrl(path: string) {
