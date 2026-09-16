@@ -11,6 +11,7 @@ import {
   AskCancelPreview,
   AskDefaultPreview,
   AskHitlPreview,
+  AskPlainPreview,
   AskReviewPreview,
 } from "@/components/ask-preview"
 import { AskKeyboardDocs } from "@/components/ask-keyboard-docs"
@@ -85,7 +86,7 @@ export default function AskPage() {
         <RegistryExample
           name="ask"
           title="Default"
-          description="Next and Submit. Other is a row — Enter commits, it is not an answer while typing."
+          description="Card shell with answer subtext. Submit shows a toast. Hover Previous / Next / Submit for Kbd tooltips."
         >
           <AskDefaultPreview />
         </RegistryExample>
@@ -94,6 +95,15 @@ export default function AskPage() {
           <CopyCommand command={installCommand} />
           <p className="text-sm text-muted-foreground">
             The CLI copies the block into your project. You own the source.
+            Mount a root{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              {"<Toaster />"}
+            </code>{" "}
+            if you enable{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              toastOnSubmit
+            </code>
+            .
           </p>
         </section>
         <section className="flex flex-col gap-3">
@@ -117,6 +127,23 @@ export default function AskPage() {
             </code>
             .
           </p>
+        </section>
+        <section className="flex flex-col gap-3">
+          <Heading id="variants">Variants</Heading>
+          <p className="text-sm text-muted-foreground">
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              variant=&quot;plain&quot;
+            </code>{" "}
+            drops the card background and uses bordered answer rows (Questionnaire
+            look). Choice{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              description
+            </code>{" "}
+            adds optional subtext under each label.
+          </p>
+          <RegistryExample>
+            <AskPlainPreview />
+          </RegistryExample>
         </section>
         <section className="flex flex-col gap-3">
           <Heading id="auto-advance">Auto-advance</Heading>
@@ -191,6 +218,16 @@ export default function AskPage() {
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">onResult</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">(result) =&gt; void</td>
                   <td className="py-2">—</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">variant</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">&quot;card&quot; | &quot;plain&quot;</td>
+                  <td className="py-2 font-mono text-[0.8rem]">&quot;card&quot;</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">toastOnSubmit</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">false</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">review</td>

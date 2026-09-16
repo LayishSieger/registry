@@ -32,6 +32,7 @@ export type DocsTocItem = {
 export const askToc: DocsTocItem[] = [
   { title: "Installation", url: "#installation" },
   { title: "Usage", url: "#usage" },
+  { title: "Variants", url: "#variants" },
   { title: "Auto-advance", url: "#auto-advance" },
   { title: "Review", url: "#review" },
   { title: "Cancel", url: "#cancel" },

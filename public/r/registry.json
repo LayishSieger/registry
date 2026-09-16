@@ -14,8 +14,10 @@
         "button",
         "popover",
         "tooltip",
-        "kbd"
+        "kbd",
+        "toast"
       ],
+      "dependencies": ["@base-ui/react"],
       "files": [
         {
           "path": "registry/new-york/blocks/ask/ask.tsx",

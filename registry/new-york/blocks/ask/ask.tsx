@@ -54,12 +54,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { toast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_AUTO_ADVANCE_DELAY_MS = 380
 
-const BATCH_ROW_CLASS =
+const CARD_ROW_CLASS =
   "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70"
+
+const PLAIN_ROW_CLASS =
+  "group/questionnaire-choice relative flex min-h-11 items-start justify-between gap-3 rounded-lg border border-input bg-transparent px-3 py-2.5 text-start text-sm transition-colors outline-none select-none hover:bg-muted/50 has-[>input:focus-visible]:border-ring has-[>input:focus-visible]:ring-3 has-[>input:focus-visible]:ring-ring/50 data-checked:border-primary/40 data-checked:bg-muted"
 
 const BATCH_BADGE_CLASS =
   "inline-flex size-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-medium"
@@ -88,7 +92,11 @@ function resolveOtherTrailingAction(args: {
 export type AskChoice = {
   value: string
   label: string
+  /** Optional subtext under the answer label. */
+  description?: string
 }
+
+export type AskVariant = "card" | "plain"
 
 type AskItemBase = {
   name: string
@@ -151,6 +159,18 @@ export type AskProps = {
   cancel?: boolean
   onCancel?: () => void
   autoAdvanceDelay?: number
+  /**
+   * Visual shell. `card` keeps the Card chrome (default).
+   * `plain` drops the card background and uses bordered answer rows
+   * (shadcn Questionnaire look).
+   */
+  variant?: AskVariant
+  /**
+   * Show a success toast when the batch is submitted.
+   * Requires a root `<Toaster />` from `@/components/ui/toast`.
+   * Default false.
+   */
+  toastOnSubmit?: boolean
   /** Answer shortcut keys on choices. Default `"numbers"`. */
   shortcuts?: "numbers" | "letters" | false
   /**
@@ -285,22 +305,32 @@ function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
 
 function AskOptionRow({
   children,
+  description,
   className,
   isPending = false,
   showHoverArrow = false,
+  variant = "card",
   ...props
 }: React.ComponentProps<typeof QuestionnairePrimitive.Choice> & {
+  description?: string
   isPending?: boolean
   showHoverArrow?: boolean
+  variant?: AskVariant
 }) {
+  const plain = variant === "plain"
+  const hasDescription = Boolean(description)
+
   return (
     <QuestionnairePrimitive.Choice
       data-slot="questionnaire-choice"
       className={cn(
-        BATCH_ROW_CLASS,
-        "cursor-pointer data-checked:bg-accent data-checked:text-accent-foreground",
+        plain ? PLAIN_ROW_CLASS : CARD_ROW_CLASS,
+        !plain &&
+          "cursor-pointer data-checked:bg-accent data-checked:text-accent-foreground",
+        plain && "cursor-pointer data-checked:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50",
-        isPending && "ring-1 ring-primary/50",
+        hasDescription && !plain && "items-start",
+        isPending && (plain ? "ring-1 ring-primary/50" : "ring-1 ring-primary/50"),
         className,
       )}
       {...props}
@@ -311,9 +341,20 @@ function AskOptionRow({
       />
       <QuestionnairePrimitive.ChoiceLabel
         data-slot="questionnaire-choice-label"
-        className="min-w-0 flex-1 leading-snug"
+        className={cn(
+          "min-w-0 flex-1 leading-snug",
+          hasDescription && "flex flex-col gap-0.5",
+        )}
       >
-        {children}
+        <span className={cn(hasDescription && "font-medium")}>{children}</span>
+        {description ? (
+          <span
+            data-slot="questionnaire-choice-description"
+            className="text-sm font-normal text-muted-foreground"
+          >
+            {description}
+          </span>
+        ) : null}
       </QuestionnairePrimitive.ChoiceLabel>
       <span className="relative size-6 shrink-0">
         <QuestionnairePrimitive.ChoiceShortcut
@@ -321,13 +362,17 @@ function AskOptionRow({
           className={cn(
             BATCH_BADGE_CLASS,
             "pointer-events-none border-transparent text-muted-foreground group-data-checked/questionnaire-choice:border-primary group-data-checked/questionnaire-choice:bg-primary group-data-checked/questionnaire-choice:text-primary-foreground",
+            hasDescription && "translate-y-0.5",
             showHoverArrow && "group-hover/questionnaire-choice:hidden",
           )}
         />
         {showHoverArrow ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-0 hidden items-center justify-center rounded-md bg-primary text-primary-foreground group-hover/questionnaire-choice:inline-flex"
+            className={cn(
+              "pointer-events-none absolute inset-0 hidden items-center justify-center rounded-md bg-primary text-primary-foreground group-hover/questionnaire-choice:inline-flex",
+              hasDescription && "translate-y-0.5",
+            )}
           >
             <ArrowRightIcon className="size-3" />
           </span>
@@ -348,6 +393,7 @@ function AskOtherRow({
   text,
   autoAdvance,
   multiple = false,
+  variant = "card",
   inputRef,
   onTextChange,
   onCommit,
@@ -365,6 +411,7 @@ function AskOtherRow({
   text: string
   autoAdvance: boolean
   multiple?: boolean
+  variant?: AskVariant
   inputRef: (node: HTMLInputElement | null) => void
   onTextChange: (value: string) => void
   onCommit: () => void
@@ -374,6 +421,7 @@ function AskOtherRow({
 }) {
   const localRef = React.useRef<HTMLInputElement | null>(null)
   const [focused, setFocused] = React.useState(false)
+  const plain = variant === "plain"
 
   function setInputNode(node: HTMLInputElement | null) {
     localRef.current = node
@@ -431,8 +479,10 @@ function AskOtherRow({
     <div
       data-slot="questionnaire-other-row"
       className={cn(
-        BATCH_ROW_CLASS,
-        highlighted && "bg-accent text-accent-foreground",
+        plain ? PLAIN_ROW_CLASS : CARD_ROW_CLASS,
+        plain
+          ? highlighted && "border-primary/40 bg-muted text-accent-foreground"
+          : highlighted && "bg-accent text-accent-foreground",
         isPending && "ring-1 ring-primary/50",
         disabled && "cursor-not-allowed opacity-50",
       )}
@@ -835,6 +885,8 @@ export function Ask({
   cancel = false,
   onCancel,
   autoAdvanceDelay = DEFAULT_AUTO_ADVANCE_DELAY_MS,
+  variant = "card",
+  toastOnSubmit = false,
   shortcuts = "numbers",
   shortcutTooltips = true,
   labels,
@@ -843,6 +895,7 @@ export function Ask({
   onItemChange,
 }: AskProps) {
   const showShortcutTooltips = shortcuts !== false && shortcutTooltips
+  const plain = variant === "plain"
   const firstName = items[0]?.name ?? ""
   const lastName = items.at(-1)?.name
   const formRef = React.useRef<HTMLFormElement>(null)
@@ -1057,15 +1110,24 @@ export function Ask({
       return
     }
     event.preventDefault()
-    onResult?.({
-      status: "submitted",
-      answers: readAnswers(
-        event.currentTarget,
-        items,
-        selectionRef.current,
-        otherDraftsRef.current,
-      ),
-    })
+    const answers = readAnswers(
+      event.currentTarget,
+      items,
+      selectionRef.current,
+      otherDraftsRef.current,
+    )
+    const result: AskResult = { status: "submitted", answers }
+    if (toastOnSubmit) {
+      const summary = answers
+        .map((answer) => `${answer.title}: ${answer.label}`)
+        .join(" · ")
+      toast.add({
+        type: "success",
+        title: "Submitted",
+        description: summary || "Batch submitted.",
+      })
+    }
+    onResult?.(result)
     onSubmit?.(event)
   }
 
@@ -1240,7 +1302,12 @@ export function Ask({
         onKeyDown={handleKeyDown}
         onSubmit={handleSubmit}
       >
-      <Card>
+      <Card
+        className={cn(
+          plain &&
+            "gap-4 rounded-none bg-transparent py-0 ring-0 [--card-spacing:--spacing(0)] has-data-[slot=card-footer]:pb-0",
+        )}
+      >
         <div hidden={phase === "review"}>
           {items.map((item) => {
             const titleId = `ask-${item.name}-title`
@@ -1262,7 +1329,9 @@ export function Ask({
                   }))
                 }}
               >
-                <CardHeader>
+                <CardHeader
+                  className={cn(plain && "rounded-none px-0")}
+                >
                   <QuestionnaireTitle id={titleId} render={<CardTitle />}>
                     {item.title}
                   </QuestionnaireTitle>
@@ -1289,8 +1358,8 @@ export function Ask({
                     </div>
                   </CardAction>
                 </CardHeader>
-                <CardContent>
-                  <QuestionnaireChoices className="gap-1">
+                <CardContent className={cn(plain && "px-0")}>
+                  <QuestionnaireChoices className={cn("gap-1", plain && "gap-2")}>
                     {item.choices.map((choice) => {
                       const choiceKey = `${item.name}:${choice.value}`
                       const isPending = pendingKey === choiceKey
@@ -1308,10 +1377,12 @@ export function Ask({
                         <AskOptionRow
                           key={choice.value}
                           checked={isSelected}
+                          description={choice.description}
                           disabled={pendingKey != null && !isPending}
                           isPending={isPending}
                           showHoverArrow={showHoverArrow}
                           value={choice.value}
+                          variant={variant}
                           onClick={() => {
                             if (item.multiple || !isSelected) return
                             clear()
@@ -1381,6 +1452,7 @@ export function Ask({
                         text={otherDrafts[item.name]?.text ?? ""}
                         autoAdvance={canAutoAdvance}
                         multiple={item.multiple === true}
+                        variant={variant}
                         inputRef={(node) => {
                           otherInputRefs.current[item.name] = node
                         }}
@@ -1439,7 +1511,7 @@ export function Ask({
         </div>
         {phase === "review" ? (
           <>
-            <CardHeader>
+            <CardHeader className={cn(plain && "rounded-none px-0")}>
               <CardTitle>{labels?.review ?? "Review"}</CardTitle>
               <CardDescription>Submit this batch?</CardDescription>
               {showCancel ? (
@@ -1448,7 +1520,7 @@ export function Ask({
                 </CardAction>
               ) : null}
             </CardHeader>
-            <CardContent>
+            <CardContent className={cn(plain && "px-0")}>
               <ul className="flex flex-col gap-4">
                 {reviewAnswers.map((answer) => (
                   <li key={answer.name} className="flex flex-col gap-1">
@@ -1463,7 +1535,12 @@ export function Ask({
           </>
         ) : null}
         {showActions ? (
-          <CardFooter className="border-t-0 bg-transparent">
+          <CardFooter
+            className={cn(
+              "border-t-0 bg-transparent",
+              plain && "px-0 pb-0",
+            )}
+          >
           <QuestionnaireActions className="w-full">
             {phase === "review" ? (
               <>

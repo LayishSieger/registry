@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import type {
   AskItem,
   AskResult,
+  AskVariant,
 } from "@/registry/new-york/blocks/ask/ask"
 import { Ask } from "@/registry/new-york/blocks/ask/ask"
 
@@ -16,9 +17,21 @@ const defaultItems: AskItem[] = [
     description: "Use Next to continue.",
     required: true,
     choices: [
-      { value: "clarify", label: "Ask a clarifying question" },
-      { value: "draft", label: "Draft a first version" },
-      { value: "review", label: "Review what exists" },
+      {
+        value: "clarify",
+        label: "Ask a clarifying question",
+        description: "Gather missing context before writing.",
+      },
+      {
+        value: "draft",
+        label: "Draft a first version",
+        description: "Produce a starting point to iterate on.",
+      },
+      {
+        value: "review",
+        label: "Review what exists",
+        description: "Critique the current approach.",
+      },
     ],
   },
   {
@@ -33,6 +46,49 @@ const defaultItems: AskItem[] = [
       label: "Another note",
       placeholder: "Other",
     },
+  },
+]
+
+const plainItems: AskItem[] = [
+  {
+    name: "direction",
+    title: "What should the agent build next?",
+    description: "Choose a direction or describe another task.",
+    required: true,
+    choices: [
+      {
+        value: "delegation",
+        label: "Delegation",
+        description: "Show how work moves to a specialist.",
+      },
+      {
+        value: "questions",
+        label: "Question prompts",
+        description: "Show choices while the interface waits.",
+      },
+      { value: "both", label: "Both together" },
+    ],
+    input: {
+      label: "Another answer",
+      placeholder: "Type another answer…",
+    },
+  },
+  {
+    name: "detail",
+    title: "How much detail should it include?",
+    description: "Skip this if you are not sure yet.",
+    choices: [
+      {
+        value: "focused",
+        label: "Focused",
+        description: "One clear outcome.",
+      },
+      {
+        value: "complete",
+        label: "Complete flow",
+        description: "End-to-end with edge cases.",
+      },
+    ],
   },
 ]
 
@@ -128,10 +184,14 @@ function PreviewBatch({
   items,
   review = false,
   cancel = false,
+  variant = "card",
+  toastOnSubmit = true,
 }: {
   items: AskItem[]
   review?: boolean
   cancel?: boolean
+  variant?: AskVariant
+  toastOnSubmit?: boolean
 }) {
   const [submitted, setSubmitted] = React.useState<string | null>(null)
 
@@ -151,6 +211,8 @@ function PreviewBatch({
       items={items}
       review={review}
       cancel={cancel}
+      variant={variant}
+      toastOnSubmit={toastOnSubmit}
       onResult={(result) => setSubmitted(summarizeResult(result))}
     />
   )
@@ -158,6 +220,10 @@ function PreviewBatch({
 
 export function AskDefaultPreview() {
   return <PreviewBatch items={defaultItems} />
+}
+
+export function AskPlainPreview() {
+  return <PreviewBatch items={plainItems} variant="plain" />
 }
 
 export function AskAutoAdvancePreview() {
@@ -198,6 +264,7 @@ export function AskHitlPreview() {
     <Ask
       cancel
       review
+      toastOnSubmit
       items={reviewItems}
       onResult={setResult}
     />
