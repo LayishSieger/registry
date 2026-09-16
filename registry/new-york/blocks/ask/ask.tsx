@@ -750,12 +750,10 @@ export function Ask({
     Record<string, ItemSelection>
   >({})
   const selectionRef = React.useRef(selection)
-  selectionRef.current = selection
   const [otherDrafts, setOtherDrafts] = React.useState<
     Record<string, OtherDraft>
   >({})
   const otherDraftsRef = React.useRef(otherDrafts)
-  otherDraftsRef.current = otherDrafts
   const [otherFocusedName, setOtherFocusedName] = React.useState<string | null>(
     null,
   )
@@ -767,7 +765,16 @@ export function Ask({
   )
   const activeItem = itemProp ?? uncontrolledItem
   const activeItemRef = React.useRef(activeItem)
-  activeItemRef.current = activeItem
+
+  React.useEffect(() => {
+    selectionRef.current = selection
+  }, [selection])
+  React.useEffect(() => {
+    otherDraftsRef.current = otherDrafts
+  }, [otherDrafts])
+  React.useEffect(() => {
+    activeItemRef.current = activeItem
+  }, [activeItem])
 
   const { pendingKey, schedule, clear } = useAutoAdvance(autoAdvanceDelay)
 
