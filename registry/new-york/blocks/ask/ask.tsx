@@ -1453,10 +1453,10 @@ export function Ask({
             phase === "questions" &&
             "relative",
           showCancel && phase === "questions" && !plain && "pt-2",
-          // Unfocused: no ring; muted surface so the card still reads against the
-          // preview/page background (same idea as dark-mode card vs background).
-          // Focused: restore the default card ring as the only focus chrome.
-          focusable && !plain && !interactiveFocused && "bg-muted ring-0",
+          // One elevated surface for both states (lighter than muted/accent so
+          // option hover still reads). Focus only restores the default card ring.
+          focusable && !plain && "bg-sidebar",
+          focusable && !plain && !interactiveFocused && "ring-0",
         )}
       >
         {showCancel && phase === "questions" ? (
