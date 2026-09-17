@@ -1200,8 +1200,17 @@ export function Ask({
 
   React.useEffect(() => {
     if (!focusable || !keyboardArmed) return
+    // Capture-phase so ←/→ never hit native radio group navigation.
+    // Only arrows here; Enter/numbers stay on the form handler.
     const onKeyDown = (event: KeyboardEvent) => {
-      // Only the armed instance should handle keys; stop others if any linger.
+      if (
+        event.key !== "ArrowLeft" &&
+        event.key !== "ArrowRight" &&
+        event.key !== "ArrowUp" &&
+        event.key !== "ArrowDown"
+      ) {
+        return
+      }
       handleAskKeyDownRef.current(event)
     }
     window.addEventListener("keydown", onKeyDown, true)
