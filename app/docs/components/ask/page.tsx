@@ -86,7 +86,7 @@ export default function AskPage() {
         <RegistryExample
           name="ask"
           title="Default"
-          description="Card shell with answer subtext. Submit shows a toast. Hover Previous / Next / Submit for Kbd tooltips."
+          description="Card shell with answer subtext. Submit shows a toast. Hold ⌘/Ctrl to reveal inline Kbd on actions."
         >
           <AskDefaultPreview />
         </RegistryExample>
@@ -245,7 +245,7 @@ export default function AskPage() {
                   <td className="py-2 font-mono text-[0.8rem]">&quot;numbers&quot;</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">shortcutTooltips</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">shortcutHints</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
                   <td className="py-2 font-mono text-[0.8rem]">true</td>
                 </tr>
