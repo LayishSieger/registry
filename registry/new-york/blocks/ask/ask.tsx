@@ -72,8 +72,8 @@ const PLAIN_ROW_CLASS =
 
 const TOUCH_ACTION_CLASS = "min-h-11 sm:min-h-0"
 
-const FOCUS_RING_CLASS =
-  "ring-2! ring-ring/55 ring-offset-2 ring-offset-background"
+const FOCUS_OUTLINE_CLASS =
+  "outline outline-2 outline-offset-2 outline-ring/60"
 
 const BATCH_BADGE_CLASS =
   "inline-flex size-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-medium"
@@ -1127,18 +1127,22 @@ export function Ask({
 
     if (key === "ArrowUp" || key === "ArrowDown") {
       event.preventDefault()
+      if ("stopPropagation" in event) event.stopPropagation()
       moveChoiceFocus(form, key === "ArrowDown" ? 1 : -1)
       return
     }
 
     if (key === "ArrowLeft") {
+      // Prevent native radio group ←/→ from changing answers.
       event.preventDefault()
+      if ("stopPropagation" in event) event.stopPropagation()
       clickSlot(form, "previous")
       return
     }
 
     if (key === "ArrowRight") {
       event.preventDefault()
+      if ("stopPropagation" in event) event.stopPropagation()
       if (nextIsShowing) {
         if (showReviewNext) {
           if (hasAnswer) enterReview()
@@ -1416,15 +1420,17 @@ export function Ask({
         defaultItem={defaultItem}
         item={activeItem || undefined}
         items={collection}
-        shortcuts={
-          keyboardArmed && shortcuts !== false ? shortcuts : undefined
-        }
+        shortcuts={shortcuts === false ? undefined : shortcuts}
         onItemChange={handleItemChange}
-        onKeyDown={
-          focusable
-            ? undefined
-            : (event) => handleAskKeyDownRef.current(event)
-        }
+        onKeyDown={(event) => {
+          if (focusable && !keyboardArmed) {
+            // Form may still be focused briefly; don't let Questionnaire act.
+            event.preventDefault()
+            event.stopPropagation()
+            return
+          }
+          handleAskKeyDownRef.current(event)
+        }}
         onSubmit={handleSubmit}
       >
       <Card
@@ -1436,11 +1442,11 @@ export function Ask({
             phase === "questions" &&
             "relative",
           showCancel && phase === "questions" && !plain && "pt-2",
-          focusable && !plain && !interactiveFocused && "ring-0!",
+          // Keep the default card ring; add a separate focus outline on top.
           focusable &&
             !plain &&
             interactiveFocused &&
-            FOCUS_RING_CLASS,
+            FOCUS_OUTLINE_CLASS,
         )}
       >
         {showCancel && phase === "questions" ? (
