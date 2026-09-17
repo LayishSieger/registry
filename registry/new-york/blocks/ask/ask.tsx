@@ -60,10 +60,12 @@ import { cn } from "@/lib/utils"
 const DEFAULT_AUTO_ADVANCE_DELAY_MS = 380
 
 const CARD_ROW_CLASS =
-  "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70"
+  "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md border border-input px-2.5 py-2 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70 sm:border-transparent sm:px-2 sm:py-1.5"
 
 const PLAIN_ROW_CLASS =
   "group/questionnaire-choice relative flex min-h-11 items-start justify-between gap-3 rounded-lg border border-input bg-transparent px-3 py-2.5 text-start text-sm transition-colors outline-none select-none hover:bg-muted/50 has-[>input:focus-visible]:border-ring has-[>input:focus-visible]:ring-3 has-[>input:focus-visible]:ring-ring/50 data-checked:border-primary/40 data-checked:bg-muted"
+
+const TOUCH_ACTION_CLASS = "min-h-11 sm:min-h-0"
 
 const BATCH_BADGE_CLASS =
   "inline-flex size-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-medium"
@@ -303,6 +305,44 @@ function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
   inputs[nextIndex]?.focus()
 }
 
+function useHoverTooltips() {
+  const [enabled, setEnabled] = React.useState(false)
+
+  React.useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)")
+    const sync = () => setEnabled(media.matches)
+    sync()
+    media.addEventListener("change", sync)
+    return () => media.removeEventListener("change", sync)
+  }, [])
+
+  return enabled
+}
+
+function AskProgress({ className }: { className?: string }) {
+  return (
+    <QuestionnaireProgress
+      className={cn(
+        "min-w-0 whitespace-nowrap text-sm font-normal tabular-nums",
+        className,
+      )}
+      render={(props, state) => (
+        <div
+          {...props}
+          aria-label={`Question ${state.current} of ${state.total}`}
+        >
+          <span className="sm:hidden">
+            {state.current}/{state.total}
+          </span>
+          <span className="hidden sm:inline">
+            Question {state.current} of {state.total}
+          </span>
+        </div>
+      )}
+    />
+  )
+}
+
 function AskOptionRow({
   children,
   description,
@@ -326,18 +366,19 @@ function AskOptionRow({
       className={cn(
         plain ? PLAIN_ROW_CLASS : CARD_ROW_CLASS,
         !plain &&
-          "cursor-pointer data-checked:bg-accent data-checked:text-accent-foreground",
-        plain && "cursor-pointer data-checked:text-accent-foreground",
+          "cursor-default data-checked:bg-accent data-checked:text-accent-foreground sm:cursor-pointer",
+        plain &&
+          "cursor-default data-checked:text-accent-foreground sm:cursor-pointer",
         "data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50",
         hasDescription && !plain && "items-start",
-        isPending && (plain ? "ring-1 ring-primary/50" : "ring-1 ring-primary/50"),
+        isPending && "ring-1 ring-primary/50",
         className,
       )}
       {...props}
     >
       <QuestionnairePrimitive.ChoiceInput
         data-slot="questionnaire-choice-input"
-        className="absolute inset-0 size-full cursor-pointer opacity-0"
+        className="absolute inset-0 size-full cursor-default opacity-0 sm:cursor-pointer"
       />
       <QuestionnairePrimitive.ChoiceLabel
         data-slot="questionnaire-choice-label"
@@ -836,6 +877,7 @@ function CancelBatchButton({
           type="button"
           variant="ghost"
           size="icon"
+          className="size-11 sm:size-9"
           aria-label={labels?.cancel ?? "Cancel batch"}
         >
           <XIcon />
@@ -894,7 +936,9 @@ export function Ask({
   item: itemProp,
   onItemChange,
 }: AskProps) {
-  const showShortcutTooltips = shortcuts !== false && shortcutTooltips
+  const hoverTooltips = useHoverTooltips()
+  const showShortcutTooltips =
+    shortcuts !== false && shortcutTooltips && hoverTooltips
   const plain = variant === "plain"
   const firstName = items[0]?.name ?? ""
   const lastName = items.at(-1)?.name
@@ -1332,34 +1376,45 @@ export function Ask({
                 <CardHeader
                   className={cn(plain && "rounded-none px-0")}
                 >
-                  <QuestionnaireTitle id={titleId} render={<CardTitle />}>
-                    {item.title}
-                  </QuestionnaireTitle>
+                  {showCancel ? (
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <AskProgress />
+                      <CancelBatchButton
+                        labels={labels}
+                        onCancel={emitCancel}
+                      />
+                    </div>
+                  ) : null}
+                  {showCancel ? (
+                    <QuestionnaireTitle
+                      id={titleId}
+                      className="mb-0"
+                      render={<CardTitle />}
+                    >
+                      {item.title}
+                    </QuestionnaireTitle>
+                  ) : (
+                    <div className="flex w-full items-start justify-between gap-3">
+                      <QuestionnaireTitle
+                        id={titleId}
+                        className="mb-0 min-w-0 flex-1"
+                        render={<CardTitle />}
+                      >
+                        {item.title}
+                      </QuestionnaireTitle>
+                      <AskProgress className="pt-0.5" />
+                    </div>
+                  )}
                   {item.description ? (
                     <QuestionnaireDescription render={<CardDescription />}>
                       {item.description}
                     </QuestionnaireDescription>
                   ) : null}
-                  <CardAction>
-                    <div className="flex items-center gap-2">
-                      <QuestionnaireProgress
-                        render={(props, state) => (
-                          <div {...props}>
-                            Question {state.current} of {state.total}
-                          </div>
-                        )}
-                      />
-                      {showCancel ? (
-                        <CancelBatchButton
-                          labels={labels}
-                          onCancel={emitCancel}
-                        />
-                      ) : null}
-                    </div>
-                  </CardAction>
                 </CardHeader>
                 <CardContent className={cn(plain && "px-0")}>
-                  <QuestionnaireChoices className={cn("gap-1", plain && "gap-2")}>
+                  <QuestionnaireChoices
+                    className={cn(plain ? "gap-2" : "gap-2 sm:gap-1")}
+                  >
                     {item.choices.map((choice) => {
                       const choiceKey = `${item.name}:${choice.value}`
                       const isPending = pendingKey === choiceKey
@@ -1552,7 +1607,10 @@ export function Ask({
                   <Button
                     type="button"
                     variant="outline"
-                    className="col-start-1 row-start-1 justify-self-start"
+                    className={cn(
+                      "col-start-1 row-start-1 justify-self-start",
+                      TOUCH_ACTION_CLASS,
+                    )}
                     onClick={leaveReview}
                   >
                     <ArrowLeftIcon data-icon="inline-start" />
@@ -1614,7 +1672,12 @@ export function Ask({
                     >
                       {!hasAnswer ? (
                         <span className="col-start-3 row-start-1 inline-flex justify-self-end">
-                          <Button type="button" disabled onClick={enterReview}>
+                          <Button
+                            type="button"
+                            disabled
+                            className={TOUCH_ACTION_CLASS}
+                            onClick={enterReview}
+                          >
                             {nextLabel}
                             <ArrowRightIcon data-icon="inline-end" />
                           </Button>
@@ -1622,7 +1685,10 @@ export function Ask({
                       ) : (
                         <Button
                           type="button"
-                          className="col-start-3 row-start-1 justify-self-end"
+                          className={cn(
+                            "col-start-3 row-start-1 justify-self-end",
+                            TOUCH_ACTION_CLASS,
+                          )}
                           onClick={enterReview}
                         >
                           {nextLabel}

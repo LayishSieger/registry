@@ -86,7 +86,7 @@ Set \`cancel\` on the batch. Confirm before discarding answers.
 
 ## Keyboard
 
-Arrow keys navigate. Enter continues or submits. Number (or letter) keys pick choices. Navigation shortcuts appear as tooltips on Previous / Skip / Next / Submit when \`shortcutTooltips\` is enabled (default). Set \`shortcuts={false}\` to disable answer keys and tooltips, or \`shortcutTooltips={false}\` to keep bindings without hover hints.
+Arrow keys navigate. Enter continues or submits. Number (or letter) keys pick choices. Navigation shortcuts appear as tooltips on Previous / Skip / Next / Submit when \`shortcutTooltips\` is enabled (default) on hover-capable pointers. Touch devices skip tooltips. Set \`shortcuts={false}\` to disable answer keys and tooltips, or \`shortcutTooltips={false}\` to keep bindings without hover hints.
 
 ## Toast
 
@@ -112,7 +112,7 @@ Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requi
 | \`onCancel\` | \`() => void\` | — | Called after cancel is confirmed. |
 | \`autoAdvanceDelay\` | \`number\` | \`380\` | Delay in ms before auto-advance. |
 | \`shortcuts\` | \`"numbers" \\| "letters" \\| false\` | \`"numbers"\` | Answer shortcut keys. |
-| \`shortcutTooltips\` | \`boolean\` | \`true\` | Kbd tooltips on Previous / Skip / Next / Submit (requires \`shortcuts\` ≠ \`false\`). |
+| \`shortcutTooltips\` | \`boolean\` | \`true\` | Kbd tooltips on Previous / Skip / Next / Submit for fine pointers (requires \`shortcuts\` ≠ \`false\`; omitted on touch). |
 | \`labels\` | \`AskLabels\` | — | Override action and cancel copy. |
 | \`defaultItem\` | \`string\` | first item | Uncontrolled starting question. |
 | \`item\` | \`string\` | — | Controlled active question. |
