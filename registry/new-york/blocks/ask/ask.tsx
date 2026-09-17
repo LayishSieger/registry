@@ -1350,7 +1350,7 @@ export function Ask({
       >
       <Card
         className={cn(
-          !plain && "gap-3",
+          !plain && "gap-2!",
           plain &&
             "gap-4 rounded-none bg-transparent py-0 ring-0 [--card-spacing:--spacing(0)] has-data-[slot=card-footer]:pb-0",
           showCancel &&
@@ -1601,7 +1601,7 @@ export function Ask({
         {showActions ? (
           <CardFooter
             className={cn(
-              "border-t-0 bg-transparent pt-0",
+              "border-t-0 bg-transparent p-0 px-(--card-spacing) pt-1 pb-(--card-spacing)",
               plain && "px-0 pb-0",
             )}
           >
