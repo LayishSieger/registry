@@ -15,6 +15,7 @@ import {
   AskReviewPreview,
 } from "@/components/ask-preview"
 import { AskKeyboardDocs } from "@/components/ask-keyboard-docs"
+import { AskFocusScope } from "@/components/ask-focus-scope"
 import { RegistryExample } from "@/components/registry-example"
 import { askToc } from "@/lib/docs"
 import {
@@ -52,6 +53,7 @@ function Heading({
 export default function AskPage() {
   return (
     <div className="flex items-start">
+      <AskFocusScope>
       <div className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col gap-10 py-8 lg:py-10">
         <DocsPageHeader
           title={askTitle}
@@ -280,6 +282,7 @@ export default function AskPage() {
           </div>
         </section>
       </div>
+      </AskFocusScope>
       <div className="sticky top-(--header-height) hidden h-[calc(100svh-var(--header-height))] w-52 shrink-0 overflow-y-auto py-10 pl-8 xl:block">
         <DocsTableOfContents toc={askToc} />
       </div>
