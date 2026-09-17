@@ -208,6 +208,7 @@ function PreviewBatch({
 
   return (
     <Ask
+      focusable
       items={items}
       review={review}
       cancel={cancel}
@@ -262,6 +263,7 @@ export function AskHitlPreview() {
 
   return (
     <Ask
+      focusable
       cancel
       review
       toastOnSubmit

@@ -84,9 +84,10 @@ export default function AskPage() {
           .
         </p>
         <RegistryExample
+          interactiveFocus
           name="ask"
           title="Default"
-          description="Card shell with answer subtext. Submit shows a toast. Hold ⌘/Ctrl to reveal inline Kbd on actions."
+          description="Click the preview chrome or the card to focus. Hold ⌘/Ctrl for inline Kbd. Submit shows a toast."
         >
           <AskDefaultPreview />
         </RegistryExample>
@@ -141,7 +142,7 @@ export default function AskPage() {
             </code>{" "}
             adds optional subtext under each label.
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskPlainPreview />
           </RegistryExample>
         </section>
@@ -151,7 +152,7 @@ export default function AskPage() {
             First pick auto-advances. Other Enter commits and advances. After
             Back, Next comes back.
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskAutoAdvancePreview />
           </RegistryExample>
         </section>
@@ -162,7 +163,7 @@ export default function AskPage() {
             the batch. Last-slide auto-advance and Other commit go to review,
             not submit.
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskReviewPreview />
           </RegistryExample>
         </section>
@@ -172,7 +173,7 @@ export default function AskPage() {
             Set <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">cancel</code> on
             the batch. Confirm before discarding answers.
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskCancelPreview />
           </RegistryExample>
         </section>
@@ -192,7 +193,7 @@ export default function AskPage() {
             </code>
             .
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskHitlPreview />
           </RegistryExample>
         </section>
@@ -248,6 +249,21 @@ export default function AskPage() {
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">shortcutHints</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
                   <td className="py-2 font-mono text-[0.8rem]">true</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">focusable</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">false</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">focusPriority</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">number</td>
+                  <td className="py-2 font-mono text-[0.8rem]">0</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">focusTriggers</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">ref[] | element[]</td>
+                  <td className="py-2">—</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">autoAdvanceDelay</td>

@@ -50,6 +50,17 @@ import {
 } from "@/components/ui/popover"
 import { toast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
+import {
+  useInteractiveFocusRegistration,
+  type InteractiveFocusTrigger,
+} from "@/registry/new-york/blocks/ask/interactive-focus"
+
+export {
+  InteractiveFocusProvider,
+  InteractiveFocusSurface,
+  useInteractiveFocusSurface,
+} from "@/registry/new-york/blocks/ask/interactive-focus"
+export type { InteractiveFocusTrigger } from "@/registry/new-york/blocks/ask/interactive-focus"
 
 const DEFAULT_AUTO_ADVANCE_DELAY_MS = 380
 
@@ -57,9 +68,12 @@ const CARD_ROW_CLASS =
   "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md border border-input px-2.5 py-2 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70 sm:border-transparent sm:px-2 sm:py-1.5"
 
 const PLAIN_ROW_CLASS =
-  "group/questionnaire-choice relative flex min-h-11 items-start justify-between gap-3 rounded-lg border border-input bg-transparent px-3 py-2.5 text-start text-sm transition-colors outline-none select-none hover:bg-muted/50 has-[>input:focus-visible]:border-ring has-[>input:focus-visible]:ring-3 has-[>input:focus-visible]:ring-ring/50 data-checked:border-primary/40 data-checked:bg-muted"
+  "group/questionnaire-choice relative flex min-h-11 items-start justify-between gap-3 rounded-lg border border-input bg-transparent px-3 py-2.5 text-start text-sm transition-colors outline-none select-none hover:bg-muted/50 data-checked:border-primary/40 data-checked:bg-muted"
 
 const TOUCH_ACTION_CLASS = "min-h-11 sm:min-h-0"
+
+const FOCUS_RING_CLASS =
+  "ring-2! ring-ring/55 ring-offset-2 ring-offset-background"
 
 const BATCH_BADGE_CLASS =
   "inline-flex size-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-medium"
@@ -175,6 +189,26 @@ export type AskProps = {
    * `shortcuts` is not `false`.
    */
   shortcutHints?: boolean
+  /**
+   * Gate keyboard shortcuts behind interactive focus. Clicking the Ask
+   * card (or any `focusTriggers` / shared focus surface) activates it.
+   * With `InteractiveFocusProvider`, Tab cycles cards by `focusPriority`.
+   * Default false.
+   */
+  focusable?: boolean
+  /**
+   * When multiple focusable cards share a trigger (e.g. chat background),
+   * higher priority wins. Default 0.
+   */
+  focusPriority?: number
+  /**
+   * Extra elements that activate this Ask when clicked (chat pane, preview
+   * chrome, etc.). Shared surfaces from `InteractiveFocusSurface` are
+   * included automatically.
+   */
+  focusTriggers?: InteractiveFocusTrigger[]
+  /** Fires when interactive focus becomes active or inactive. */
+  onFocusChange?: (focused: boolean) => void
   labels?: AskLabels
   defaultItem?: string
   item?: string
@@ -299,10 +333,14 @@ function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
   inputs[nextIndex]?.focus()
 }
 
-function useModifierHeld() {
+function useModifierHeld(enabled = true) {
   const [held, setHeld] = React.useState(false)
 
   React.useEffect(() => {
+    if (!enabled) {
+      setHeld(false)
+      return
+    }
     const sync = (event: KeyboardEvent) => {
       setHeld(event.metaKey || event.ctrlKey)
     }
@@ -316,9 +354,9 @@ function useModifierHeld() {
       window.removeEventListener("keyup", sync)
       window.removeEventListener("blur", onBlur)
     }
-  }, [])
+  }, [enabled])
 
-  return held
+  return enabled ? held : false
 }
 
 function AskProgress({ className }: { className?: string }) {
@@ -524,7 +562,8 @@ function AskOtherRow({
       className={cn(
         plain ? PLAIN_ROW_CLASS : CARD_ROW_CLASS,
         plain
-          ? highlighted && "border-primary/40 bg-muted text-accent-foreground"
+          ? (committed || isPending) &&
+              "border-primary/40 bg-muted text-accent-foreground"
           : highlighted && "bg-accent text-accent-foreground",
         isPending && "ring-1 ring-primary/50",
         disabled && "cursor-not-allowed opacity-50",
@@ -928,18 +967,30 @@ export function Ask({
   toastOnSubmit = false,
   shortcuts = "numbers",
   shortcutHints = true,
+  focusable = false,
+  focusPriority = 0,
+  focusTriggers,
+  onFocusChange,
   labels,
   defaultItem,
   item: itemProp,
   onItemChange,
 }: AskProps) {
-  const modifierHeld = useModifierHeld()
-  const showShortcutHints =
-    shortcuts !== false && shortcutHints && modifierHeld
   const plain = variant === "plain"
   const firstName = items[0]?.name ?? ""
   const lastName = items.at(-1)?.name
   const formRef = React.useRef<HTMLFormElement>(null)
+  const { focused: interactiveFocused } = useInteractiveFocusRegistration({
+    enabled: focusable,
+    priority: focusPriority,
+    rootRef: formRef as React.RefObject<HTMLElement | null>,
+    triggers: focusTriggers,
+    onFocusChange,
+  })
+  const keyboardArmed = !focusable || interactiveFocused
+  const modifierHeld = useModifierHeld(keyboardArmed)
+  const showShortcutHints =
+    shortcuts !== false && shortcutHints && modifierHeld && keyboardArmed
   const [phase, setPhase] = React.useState<"questions" | "review">("questions")
   const [reviewAnswers, setReviewAnswers] = React.useState<
     AskAnswer[]
@@ -1036,13 +1087,27 @@ export function Ask({
     clickSlot(formRef.current, "submit")
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
-    if (event.defaultPrevented || event.nativeEvent.isComposing) return
+  function handleAskKeyDown(
+    event: KeyboardEvent | React.KeyboardEvent<HTMLFormElement>,
+  ) {
+    if (!keyboardArmed) return
+    if (event.defaultPrevented) return
+    const composing =
+      "nativeEvent" in event
+        ? event.nativeEvent.isComposing
+        : event.isComposing
+    if (composing) return
     if (event.metaKey || event.ctrlKey || event.altKey) return
-    if (isEditableTarget(event.target)) return
+
+    const form = formRef.current
+    const target = event.target
+    if (form && target instanceof Node && !form.contains(target)) {
+      if (isEditableTarget(target)) return
+    } else if (isEditableTarget(target)) {
+      return
+    }
 
     const key = event.key
-    const form = formRef.current
 
     if (phase === "review") {
       if (key === "ArrowLeft") {
@@ -1096,23 +1161,23 @@ export function Ask({
       return
     }
 
-    if (key === " " && isChoiceInput(event.target)) {
+    if (key === " " && isChoiceInput(target)) {
       event.preventDefault()
-      event.target.click()
+      target.click()
       return
     }
 
     if (key !== "Enter") return
 
-    if (isChoiceInput(event.target) && activeSlide) {
+    if (isChoiceInput(target) && activeSlide) {
       const focusedSelected = isChoiceSelected(
         activeSlide,
-        event.target.value,
+        target.value,
         selection,
       )
       if (!hasAnswer || !focusedSelected) {
         event.preventDefault()
-        event.target.click()
+        target.click()
         return
       }
       event.preventDefault()
@@ -1125,6 +1190,18 @@ export function Ask({
       continueForward()
     }
   }
+
+  const handleAskKeyDownRef = React.useRef(handleAskKeyDown)
+  handleAskKeyDownRef.current = handleAskKeyDown
+
+  React.useEffect(() => {
+    if (!focusable || !keyboardArmed) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      handleAskKeyDownRef.current(event)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [focusable, keyboardArmed])
 
   function goToNextFrom(fromName: string) {
     if (activeItemRef.current !== fromName) return
@@ -1333,13 +1410,20 @@ export function Ask({
       <Questionnaire
         ref={formRef}
         tabIndex={-1}
+        data-ask-focused={interactiveFocused ? "true" : "false"}
         className={cn("w-full outline-none", className)}
         defaultItem={defaultItem}
         item={activeItem || undefined}
         items={collection}
-        shortcuts={shortcuts === false ? undefined : shortcuts}
+        shortcuts={
+          keyboardArmed && shortcuts !== false ? shortcuts : undefined
+        }
         onItemChange={handleItemChange}
-        onKeyDown={handleKeyDown}
+        onKeyDown={
+          focusable
+            ? undefined
+            : (event) => handleAskKeyDownRef.current(event)
+        }
         onSubmit={handleSubmit}
       >
       <Card
@@ -1351,6 +1435,10 @@ export function Ask({
             phase === "questions" &&
             "relative",
           showCancel && phase === "questions" && !plain && "pt-2",
+          focusable &&
+            !plain &&
+            interactiveFocused &&
+            FOCUS_RING_CLASS,
         )}
       >
         {showCancel && phase === "questions" ? (

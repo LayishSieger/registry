@@ -21,6 +21,10 @@
         {
           "path": "registry/new-york/blocks/ask/ask.tsx",
           "type": "registry:block"
+        },
+        {
+          "path": "registry/new-york/blocks/ask/interactive-focus.tsx",
+          "type": "registry:component"
         }
       ]
     }
