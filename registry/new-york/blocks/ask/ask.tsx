@@ -1350,6 +1350,7 @@ export function Ask({
       >
       <Card
         className={cn(
+          !plain && "gap-3",
           plain &&
             "gap-4 rounded-none bg-transparent py-0 ring-0 [--card-spacing:--spacing(0)] has-data-[slot=card-footer]:pb-0",
           showCancel &&
@@ -1390,33 +1391,31 @@ export function Ask({
                 }}
               >
                 <CardHeader
-                  className={cn(plain && "rounded-none px-0")}
+                  className={cn(
+                    "gap-0.5",
+                    plain && "rounded-none px-0",
+                  )}
                 >
                   {showCancel ? (
                     <AskProgress className="pr-10" />
                   ) : null}
-                  {showCancel ? (
-                    <QuestionnaireTitle
-                      id={titleId}
-                      className="mb-0"
-                      render={<CardTitle />}
-                    >
-                      {item.title}
-                    </QuestionnaireTitle>
-                  ) : (
-                    <div className="flex w-full items-start justify-between gap-3">
-                      <QuestionnaireTitle
-                        id={titleId}
-                        className="mb-0 min-w-0 flex-1"
-                        render={<CardTitle />}
-                      >
-                        {item.title}
-                      </QuestionnaireTitle>
-                      <AskProgress className="pt-0.5" />
-                    </div>
+                  <QuestionnaireTitle
+                    id={titleId}
+                    className="mb-0"
+                    render={<CardTitle />}
+                  >
+                    {item.title}
+                  </QuestionnaireTitle>
+                  {showCancel ? null : (
+                    <CardAction className="row-span-1">
+                      <AskProgress />
+                    </CardAction>
                   )}
                   {item.description ? (
-                    <QuestionnaireDescription render={<CardDescription />}>
+                    <QuestionnaireDescription
+                      className={cn(!showCancel && "col-span-full")}
+                      render={<CardDescription />}
+                    >
                       {item.description}
                     </QuestionnaireDescription>
                   ) : null}
@@ -1602,7 +1601,7 @@ export function Ask({
         {showActions ? (
           <CardFooter
             className={cn(
-              "border-t-0 bg-transparent",
+              "border-t-0 bg-transparent pt-0",
               plain && "px-0 pb-0",
             )}
           >
