@@ -68,7 +68,7 @@ const CARD_ROW_CLASS =
   "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md border border-input px-2.5 py-2 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70 sm:border-transparent sm:px-2 sm:py-1.5"
 
 const PLAIN_ROW_CLASS =
-  "group/questionnaire-choice relative flex min-h-11 items-start justify-between gap-3 rounded-lg border border-input bg-transparent px-3 py-2.5 text-start text-sm transition-colors outline-none select-none hover:bg-muted/50 data-checked:border-primary/40 data-checked:bg-muted"
+  "group/questionnaire-choice relative flex min-h-11 items-start justify-between gap-3 rounded-lg border border-input bg-transparent px-3 py-2.5 text-start text-sm transition-colors outline-none select-none hover:bg-muted/50 has-[>input:focus-visible]:border-foreground/40 data-checked:border-primary/40 data-checked:bg-muted"
 
 const TOUCH_ACTION_CLASS = "min-h-11 sm:min-h-0"
 
