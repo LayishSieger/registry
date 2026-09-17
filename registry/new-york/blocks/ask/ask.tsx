@@ -48,12 +48,6 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { toast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 
@@ -176,11 +170,11 @@ export type AskProps = {
   /** Answer shortcut keys on choices. Default `"numbers"`. */
   shortcuts?: "numbers" | "letters" | false
   /**
-   * Show Kbd shortcut tooltips on Previous / Skip / Next / Submit.
-   * Default true. Only applies when `shortcuts` is not `false` —
-   * set `shortcutTooltips={false}` to keep bindings without hover hints.
+   * While Command (Meta) or Ctrl is held, show Kbd hints inline on
+   * Previous / Skip / Next / Submit. Default true. Only applies when
+   * `shortcuts` is not `false`.
    */
-  shortcutTooltips?: boolean
+  shortcutHints?: boolean
   labels?: AskLabels
   defaultItem?: string
   item?: string
@@ -305,18 +299,26 @@ function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
   inputs[nextIndex]?.focus()
 }
 
-function useHoverTooltips() {
-  const [enabled, setEnabled] = React.useState(false)
+function useModifierHeld() {
+  const [held, setHeld] = React.useState(false)
 
   React.useEffect(() => {
-    const media = window.matchMedia("(hover: hover) and (pointer: fine)")
-    const sync = () => setEnabled(media.matches)
-    sync()
-    media.addEventListener("change", sync)
-    return () => media.removeEventListener("change", sync)
+    const sync = (event: KeyboardEvent) => {
+      setHeld(event.metaKey || event.ctrlKey)
+    }
+    const onBlur = () => setHeld(false)
+
+    window.addEventListener("keydown", sync)
+    window.addEventListener("keyup", sync)
+    window.addEventListener("blur", onBlur)
+    return () => {
+      window.removeEventListener("keydown", sync)
+      window.removeEventListener("keyup", sync)
+      window.removeEventListener("blur", onBlur)
+    }
   }, [])
 
-  return enabled
+  return held
 }
 
 function AskProgress({ className }: { className?: string }) {
@@ -837,27 +839,20 @@ export function AskShortcutKbd({
   )
 }
 
-function ShortcutTooltip({
-  enabled,
-  label,
+function ActionShortcutHint({
   shortcut,
-  children,
+  visible,
 }: {
-  enabled: boolean
-  label: string
   shortcut: string
-  children: React.ReactElement
+  visible: boolean
 }) {
-  if (!enabled) return children
+  if (!visible) return null
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent className="flex items-center gap-2">
-        {label}
-        <AskShortcutKbd shortcut={shortcut} />
-      </TooltipContent>
-    </Tooltip>
+    <AskShortcutKbd
+      shortcut={shortcut}
+      className="shrink-0 **:data-[slot=kbd]:bg-current/15 **:data-[slot=kbd]:text-current"
+    />
   )
 }
 
@@ -932,15 +927,15 @@ export function Ask({
   variant = "card",
   toastOnSubmit = false,
   shortcuts = "numbers",
-  shortcutTooltips = true,
+  shortcutHints = true,
   labels,
   defaultItem,
   item: itemProp,
   onItemChange,
 }: AskProps) {
-  const hoverTooltips = useHoverTooltips()
-  const showShortcutTooltips =
-    shortcuts !== false && shortcutTooltips && hoverTooltips
+  const modifierHeld = useModifierHeld()
+  const showShortcutHints =
+    shortcuts !== false && shortcutHints && modifierHeld
   const plain = variant === "plain"
   const firstName = items[0]?.name ?? ""
   const lastName = items.at(-1)?.name
@@ -1335,7 +1330,6 @@ export function Ask({
   }
 
   return (
-    <TooltipProvider delayDuration={200}>
       <Questionnaire
         ref={formRef}
         tabIndex={-1}
@@ -1608,127 +1602,107 @@ export function Ask({
           <QuestionnaireActions className="w-full">
             {phase === "review" ? (
               <>
-                <ShortcutTooltip
-                  enabled={showShortcutTooltips}
-                  label={backLabel}
-                  shortcut={ASK_SHORTCUTS.previous}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "col-start-1 row-start-1 justify-self-start",
+                    TOUCH_ACTION_CLASS,
+                  )}
+                  onClick={leaveReview}
                 >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "col-start-1 row-start-1 justify-self-start",
-                      TOUCH_ACTION_CLASS,
-                    )}
-                    onClick={leaveReview}
-                  >
-                    <ArrowLeftIcon data-icon="inline-start" />
-                    {backLabel}
-                  </Button>
-                </ShortcutTooltip>
-                <ShortcutTooltip
-                  enabled={showShortcutTooltips}
-                  label={labels?.submit ?? "Submit"}
-                  shortcut={ASK_SHORTCUTS.submit}
-                >
-                  <QuestionnaireSubmit>
-                    {labels?.submit ?? "Submit"}
-                  </QuestionnaireSubmit>
-                </ShortcutTooltip>
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.previous}
+                    visible={showShortcutHints}
+                  />
+                  {backLabel}
+                </Button>
+                <QuestionnaireSubmit>
+                  {labels?.submit ?? "Submit"}
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.submit}
+                    visible={showShortcutHints}
+                  />
+                </QuestionnaireSubmit>
               </>
             ) : (
               <>
-                <ShortcutTooltip
-                  enabled={showShortcutTooltips}
-                  label={backLabel}
-                  shortcut={ASK_SHORTCUTS.previous}
+                <QuestionnairePrevious>
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.previous}
+                    visible={showShortcutHints}
+                  />
+                  {backLabel}
+                </QuestionnairePrevious>
+                <QuestionnaireSkip
+                  className={cn(
+                    hideSkip && "hidden",
+                    skipHasArrow && "col-start-3",
+                  )}
+                  disabled={hideSkip}
+                  onClick={() => {
+                    if (!activeItem) return
+                    clear()
+                    clearItemSelection(activeItem)
+                    resetOtherDraft(activeItem)
+                  }}
                 >
-                  <QuestionnairePrevious>
-                    <ArrowLeftIcon data-icon="inline-start" />
-                    {backLabel}
-                  </QuestionnairePrevious>
-                </ShortcutTooltip>
-                <ShortcutTooltip
-                  enabled={showShortcutTooltips && !hideSkip}
-                  label={skipLabel}
-                  shortcut={ASK_SHORTCUTS.skip}
-                >
-                  <QuestionnaireSkip
-                    className={cn(
-                      hideSkip && "hidden",
-                      skipHasArrow && "col-start-3",
-                    )}
-                    disabled={hideSkip}
-                    onClick={() => {
-                      if (!activeItem) return
-                      clear()
-                      clearItemSelection(activeItem)
-                      resetOtherDraft(activeItem)
-                    }}
-                  >
-                    {skipLabel}
-                    {skipHasArrow ? (
-                      <ArrowRightIcon data-icon="inline-end" />
-                    ) : null}
-                  </QuestionnaireSkip>
-                </ShortcutTooltip>
+                  {skipLabel}
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.skip}
+                    visible={showShortcutHints && !hideSkip}
+                  />
+                </QuestionnaireSkip>
                 {showReviewNext ? (
-                  hideAutoAdvanceNext ? null : (
-                    <ShortcutTooltip
-                      enabled={showShortcutTooltips && hasAnswer}
-                      label={nextLabel}
-                      shortcut={ASK_SHORTCUTS.next}
-                    >
-                      {!hasAnswer ? (
-                        <span className="col-start-3 row-start-1 inline-flex justify-self-end">
-                          <Button
-                            type="button"
-                            disabled
-                            className={TOUCH_ACTION_CLASS}
-                            onClick={enterReview}
-                          >
-                            {nextLabel}
-                            <ArrowRightIcon data-icon="inline-end" />
-                          </Button>
-                        </span>
-                      ) : (
-                        <Button
-                          type="button"
-                          className={cn(
-                            "col-start-3 row-start-1 justify-self-end",
-                            TOUCH_ACTION_CLASS,
-                          )}
-                          onClick={enterReview}
-                        >
-                          {nextLabel}
-                          <ArrowRightIcon data-icon="inline-end" />
-                        </Button>
+                  hideAutoAdvanceNext ? null : !hasAnswer ? (
+                    <span className="col-start-3 row-start-1 inline-flex justify-self-end">
+                      <Button
+                        type="button"
+                        disabled
+                        className={TOUCH_ACTION_CLASS}
+                        onClick={enterReview}
+                      >
+                        {nextLabel}
+                        <ActionShortcutHint
+                          shortcut={ASK_SHORTCUTS.next}
+                          visible={showShortcutHints}
+                        />
+                      </Button>
+                    </span>
+                  ) : (
+                    <Button
+                      type="button"
+                      className={cn(
+                        "col-start-3 row-start-1 justify-self-end",
+                        TOUCH_ACTION_CLASS,
                       )}
-                    </ShortcutTooltip>
+                      onClick={enterReview}
+                    >
+                      {nextLabel}
+                      <ActionShortcutHint
+                        shortcut={ASK_SHORTCUTS.next}
+                        visible={showShortcutHints}
+                      />
+                    </Button>
                   )
                 ) : (
                   <>
                     {hideAutoAdvanceNext ? null : (
-                      <ShortcutTooltip
-                        enabled={showShortcutTooltips}
-                        label={nextLabel}
-                        shortcut={ASK_SHORTCUTS.next}
-                      >
-                        <QuestionnaireNext>
-                          {nextLabel}
-                          <ArrowRightIcon data-icon="inline-end" />
-                        </QuestionnaireNext>
-                      </ShortcutTooltip>
+                      <QuestionnaireNext>
+                        {nextLabel}
+                        <ActionShortcutHint
+                          shortcut={ASK_SHORTCUTS.next}
+                          visible={showShortcutHints}
+                        />
+                      </QuestionnaireNext>
                     )}
-                    <ShortcutTooltip
-                      enabled={showShortcutTooltips}
-                      label={labels?.submit ?? "Submit"}
-                      shortcut={ASK_SHORTCUTS.submit}
-                    >
-                      <QuestionnaireSubmit>
-                        {labels?.submit ?? "Submit"}
-                      </QuestionnaireSubmit>
-                    </ShortcutTooltip>
+                    <QuestionnaireSubmit>
+                      {labels?.submit ?? "Submit"}
+                      <ActionShortcutHint
+                        shortcut={ASK_SHORTCUTS.submit}
+                        visible={showShortcutHints}
+                      />
+                    </QuestionnaireSubmit>
                   </>
                 )}
               </>
@@ -1738,6 +1712,5 @@ export function Ask({
         ) : null}
       </Card>
       </Questionnaire>
-    </TooltipProvider>
   )
 }

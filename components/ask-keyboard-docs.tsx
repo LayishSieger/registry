@@ -59,20 +59,30 @@ export function AskKeyboardDocs() {
         </table>
       </div>
       <p className="text-sm text-muted-foreground">
-        Navigation shortcuts show as tooltips on Previous / Skip / Next / Submit
-        when{" "}
+        Hold{" "}
+        <Kbd>⌘</Kbd>
+        {" "}
+        (Command / Meta) or{" "}
+        <Kbd>Ctrl</Kbd>
+        {" "}
+        to reveal those navigation shortcuts as inline{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-          shortcutTooltips
+          Kbd
+        </code>{" "}
+        chips on Previous / Skip / Next / Submit when{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+          shortcutHints
         </code>{" "}
         is enabled (default). Set{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
           shortcuts=&#123;false&#125;
         </code>{" "}
-        to disable answer keys and tooltips, or{" "}
+        to disable answer keys and hints, or{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-          shortcutTooltips=&#123;false&#125;
+          shortcutHints=&#123;false&#125;
         </code>{" "}
-        to keep bindings without hover hints. Choice keys stay as row badges.
+        to keep bindings without the hold-to-reveal chips. Choice keys stay as
+        row badges.
       </p>
     </>
   )
