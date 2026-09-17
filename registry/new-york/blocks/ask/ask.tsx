@@ -864,9 +864,11 @@ function ShortcutTooltip({
 function CancelBatchButton({
   labels,
   onCancel,
+  className,
 }: {
   labels?: AskLabels
   onCancel?: () => void
+  className?: string
 }) {
   const [open, setOpen] = React.useState(false)
 
@@ -877,7 +879,7 @@ function CancelBatchButton({
           type="button"
           variant="ghost"
           size="icon"
-          className="size-11 sm:size-9"
+          className={cn("size-11 sm:size-9", className)}
           aria-label={labels?.cancel ?? "Cancel batch"}
         >
           <XIcon />
@@ -1350,8 +1352,22 @@ export function Ask({
         className={cn(
           plain &&
             "gap-4 rounded-none bg-transparent py-0 ring-0 [--card-spacing:--spacing(0)] has-data-[slot=card-footer]:pb-0",
+          showCancel &&
+            phase === "questions" &&
+            "relative",
+          showCancel && phase === "questions" && !plain && "pt-2",
         )}
       >
+        {showCancel && phase === "questions" ? (
+          <CancelBatchButton
+            className={cn(
+              "absolute z-10",
+              plain ? "top-0 right-0" : "top-2 right-2",
+            )}
+            labels={labels}
+            onCancel={emitCancel}
+          />
+        ) : null}
         <div hidden={phase === "review"}>
           {items.map((item) => {
             const titleId = `ask-${item.name}-title`
@@ -1377,13 +1393,7 @@ export function Ask({
                   className={cn(plain && "rounded-none px-0")}
                 >
                   {showCancel ? (
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <AskProgress />
-                      <CancelBatchButton
-                        labels={labels}
-                        onCancel={emitCancel}
-                      />
-                    </div>
+                    <AskProgress className="pr-10" />
                   ) : null}
                   {showCancel ? (
                     <QuestionnaireTitle
