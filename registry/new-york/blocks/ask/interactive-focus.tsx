@@ -217,7 +217,8 @@ export function useInteractiveFocusRegistration(options: {
   const onFocusChangeRef = React.useRef(options.onFocusChange)
   const triggersRef = React.useRef(options.triggers)
   const priority = options.priority ?? 0
-  const entryRef = React.useRef<InteractiveFocusEntry | null>(null)
+  const ctxRegister = ctx?.register
+  const ctxRequestFocus = ctx?.requestFocus
 
   React.useEffect(() => {
     onFocusChangeRef.current = options.onFocusChange
@@ -249,7 +250,7 @@ export function useInteractiveFocusRegistration(options: {
   React.useEffect(() => {
     if (!options.enabled) return
 
-    if (!ctx) {
+    if (!ctxRegister) {
       setSoloFocused(false)
       const onPointerDown = (event: PointerEvent) => {
         const target = event.target
@@ -278,19 +279,17 @@ export function useInteractiveFocusRegistration(options: {
         document.removeEventListener("pointerdown", onPointerDown, true)
     }
 
-    const entry: InteractiveFocusEntry = {
+    return ctxRegister({
       id,
       priority,
       getRoot: () => options.rootRef.current,
       getTriggers: () => [...(triggersRef.current ?? []), surface],
       activate,
       deactivate,
-    }
-    entryRef.current = entry
-    return ctx.register(entry)
+    })
   }, [
     activate,
-    ctx,
+    ctxRegister,
     deactivate,
     id,
     options.enabled,
@@ -301,13 +300,13 @@ export function useInteractiveFocusRegistration(options: {
 
   const requestFocus = React.useCallback(() => {
     if (!options.enabled) return
-    if (ctx) {
-      ctx.requestFocus(id)
+    if (ctxRequestFocus) {
+      ctxRequestFocus(id)
       return
     }
     setSoloFocused(true)
     options.rootRef.current?.focus({ preventScroll: true })
-  }, [ctx, id, options.enabled, options.rootRef])
+  }, [ctxRequestFocus, id, options.enabled, options.rootRef])
 
   return {
     focused,
