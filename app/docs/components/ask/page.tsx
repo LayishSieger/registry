@@ -102,6 +102,10 @@ export default function AskPage() {
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               {"<Toaster />"}
             </code>{" "}
+            from{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              @/components/ui/sonner
+            </code>{" "}
             if you enable{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               toastOnSubmit

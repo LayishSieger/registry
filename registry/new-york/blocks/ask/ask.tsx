@@ -48,7 +48,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { toast } from "@/components/ui/toast"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
   useInteractiveFocusRegistration,
@@ -176,7 +176,7 @@ export type AskProps = {
   variant?: AskVariant
   /**
    * Show a success toast when the batch is submitted.
-   * Requires a root `<Toaster />` from `@/components/ui/toast`.
+   * Requires a root `<Toaster />` from `@/components/ui/sonner`.
    * Default false.
    */
   toastOnSubmit?: boolean
@@ -1262,9 +1262,7 @@ export function Ask({
       const summary = answers
         .map((answer) => `${answer.title}: ${answer.label}`)
         .join(" · ")
-      toast.add({
-        type: "success",
-        title: "Submitted",
+      toast.success("Submitted", {
         description: summary || "Batch submitted.",
       })
     }

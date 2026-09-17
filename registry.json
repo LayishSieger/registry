@@ -14,9 +14,9 @@
         "button",
         "popover",
         "kbd",
-        "toast"
+        "sonner"
       ],
-      "dependencies": ["@base-ui/react"],
+      "dependencies": ["sonner"],
       "files": [
         {
           "path": "registry/new-york/blocks/ask/ask.tsx",

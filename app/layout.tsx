@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toast"
+import { Toaster } from "@/components/ui/sonner"
 import { siteConfig } from "@/lib/site"
 
 import "./globals.css"

@@ -54,7 +54,7 @@ The CLI copies the block into your project. You own the source.
 
 This is a GitHub registry, so the CLI reads \`registry.json\` from [${siteConfig.links.github}](${siteConfig.links.github}).
 
-Mount a root \`<Toaster />\` from \`@/components/ui/toast\` if you enable \`toastOnSubmit\`.
+Mount a root \`<Toaster />\` from \`@/components/ui/sonner\` if you enable \`toastOnSubmit\`.
 
 ## Usage
 
@@ -94,7 +94,7 @@ Set \`shortcuts={false}\` to disable answer keys and hints, or \`shortcutHints={
 
 ## Toast
 
-Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requires a root \`<Toaster />\`.
+Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requires a root \`<Toaster />\` from \`@/components/ui/sonner\`.
 
 ## AI SDK HITL
 
@@ -110,7 +110,7 @@ Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requi
 | \`onResult\` | \`(result: AskResult) => void\` | — | HITL-shaped result for \`addToolOutput\`. |
 | \`onSubmit\` | \`(event: FormEvent) => void\` | — | Native form submit. Prefer \`onResult\` for HITL. |
 | \`variant\` | \`"card" \\| "plain"\` | \`"card"\` | Card chrome, or plain bordered answers. |
-| \`toastOnSubmit\` | \`boolean\` | \`false\` | Success toast on submit (needs \`<Toaster />\`). |
+| \`toastOnSubmit\` | \`boolean\` | \`false\` | Success toast on submit (needs \`<Toaster />\` from \`sonner\`). |
 | \`review\` | \`boolean\` | \`false\` | Show a review step before submit. |
 | \`cancel\` | \`boolean\` | \`false\` | Show a confirm-to-cancel control. |
 | \`onCancel\` | \`() => void\` | — | Called after cancel is confirmed. |
