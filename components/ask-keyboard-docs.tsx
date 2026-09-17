@@ -82,7 +82,16 @@ export function AskKeyboardDocs() {
           shortcutHints=&#123;false&#125;
         </code>{" "}
         to keep bindings without the hold-to-reveal chips. Choice keys stay as
-        row badges.
+        row badges. With{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+          focusable
+        </code>
+        , shortcuts only run while the card is interactively focused — click
+        the card or its focus surface, and use Tab to move between cards in an{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+          InteractiveFocusProvider
+        </code>
+        .
       </p>
     </>
   )

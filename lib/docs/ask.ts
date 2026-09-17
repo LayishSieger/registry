@@ -86,7 +86,11 @@ Set \`cancel\` on the batch. Confirm before discarding answers.
 
 ## Keyboard
 
-Arrow keys navigate. Enter continues or submits. Number (or letter) keys pick choices. Hold Command (Meta) or Ctrl to reveal navigation shortcuts as inline \`Kbd\` chips on Previous / Skip / Next / Submit when \`shortcutHints\` is enabled (default). Set \`shortcuts={false}\` to disable answer keys and hints, or \`shortcutHints={false}\` to keep bindings without the hold-to-reveal chips.
+Arrow keys navigate. Enter continues or submits. Number (or letter) keys pick choices. Hold Command (Meta) or Ctrl to reveal navigation shortcuts as inline \`Kbd\` chips on Previous / Skip / Next / Submit when \`shortcutHints\` is enabled (default).
+
+Set \`focusable\` to gate those shortcuts behind interactive focus: click the Ask card (or any \`focusTriggers\` / \`InteractiveFocusSurface\`) to arm the keyboard. Wrap multiple cards in \`InteractiveFocusProvider\` so shared surfaces pick the highest \`focusPriority\`, and Tab cycles between them. Focused card shells show a subtle ring (\`variant="plain"\` skips the ring).
+
+Set \`shortcuts={false}\` to disable answer keys and hints, or \`shortcutHints={false}\` to keep bindings without the hold-to-reveal chips.
 
 ## Toast
 
@@ -113,6 +117,10 @@ Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requi
 | \`autoAdvanceDelay\` | \`number\` | \`380\` | Delay in ms before auto-advance. |
 | \`shortcuts\` | \`"numbers" \\| "letters" \\| false\` | \`"numbers"\` | Answer shortcut keys. |
 | \`shortcutHints\` | \`boolean\` | \`true\` | While Command/Ctrl is held, show inline \`Kbd\` on Previous / Skip / Next / Submit (requires \`shortcuts\` ≠ \`false\`). |
+| \`focusable\` | \`boolean\` | \`false\` | Gate keyboard behind interactive focus; click card / triggers / focus surface to arm. |
+| \`focusPriority\` | \`number\` | \`0\` | Higher wins when several focusable cards share a trigger. |
+| \`focusTriggers\` | \`InteractiveFocusTrigger[]\` | — | Extra click targets that focus this Ask (chat pane, etc.). |
+| \`onFocusChange\` | \`(focused: boolean) => void\` | — | Interactive focus active state. |
 | \`labels\` | \`AskLabels\` | — | Override action and cancel copy. |
 | \`defaultItem\` | \`string\` | first item | Uncontrolled starting question. |
 | \`item\` | \`string\` | — | Controlled active question. |
