@@ -46,9 +46,14 @@ function isEditableKeyboardTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
   if (target.isContentEditable) return true
   if (!(target instanceof HTMLInputElement)) {
-    return target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
+    return (
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement
+    )
   }
-  return !["button", "checkbox", "radio", "reset", "submit"].includes(target.type)
+  return !["button", "checkbox", "radio", "reset", "submit"].includes(
+    target.type,
+  )
 }
 
 function eventInside(entry: InteractiveFocusEntry, target: EventTarget | null) {
@@ -60,6 +65,18 @@ function eventInside(entry: InteractiveFocusEntry, target: EventTarget | null) {
     if (el?.contains(target)) return true
   }
   return false
+}
+
+function blurEntryRoot(getRoot: () => HTMLElement | null) {
+  const root = getRoot()
+  if (!root) return
+  const active = document.activeElement
+  if (active instanceof HTMLElement && root.contains(active)) {
+    active.blur()
+  }
+  if (typeof root.blur === "function") {
+    root.blur()
+  }
 }
 
 export function InteractiveFocusProvider({
@@ -88,29 +105,17 @@ export function InteractiveFocusProvider({
     [setFocused],
   )
 
-  const register = React.useCallback(
-    (entry: InteractiveFocusEntry) => {
-      entriesRef.current.set(entry.id, entry)
-      if (focusedIdRef.current == null) {
-        const ranked = [...entriesRef.current.values()].sort(
-          (a, b) => b.priority - a.priority,
-        )
-        if (ranked[0]?.id === entry.id) {
-          setFocused(entry.id)
-        }
+  const register = React.useCallback((entry: InteractiveFocusEntry) => {
+    entriesRef.current.set(entry.id, entry)
+    // Do not auto-focus on mount — host click / Tab arms a card.
+    return () => {
+      entriesRef.current.delete(entry.id)
+      if (focusedIdRef.current === entry.id) {
+        focusedIdRef.current = null
+        setFocusedId(null)
       }
-      return () => {
-        entriesRef.current.delete(entry.id)
-        if (focusedIdRef.current === entry.id) {
-          const ranked = [...entriesRef.current.values()].sort(
-            (a, b) => b.priority - a.priority,
-          )
-          setFocused(ranked[0]?.id ?? null)
-        }
-      }
-    },
-    [setFocused],
-  )
+    }
+  }, [])
 
   React.useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -134,10 +139,13 @@ export function InteractiveFocusProvider({
         (a, b) => b.priority - a.priority || a.id.localeCompare(b.id),
       )
       if (ranked.length < 2) return
+      // Only cycle once a card is already armed.
+      if (focusedIdRef.current == null) return
 
       event.preventDefault()
-      const currentId = focusedIdRef.current
-      const currentIndex = ranked.findIndex((entry) => entry.id === currentId)
+      const currentIndex = ranked.findIndex(
+        (entry) => entry.id === focusedIdRef.current,
+      )
       const delta = event.shiftKey ? -1 : 1
       const nextIndex =
         currentIndex < 0
@@ -179,7 +187,12 @@ export function InteractiveFocusSurface({
 
   return (
     <InteractiveFocusSurfaceContext.Provider value={ref}>
-      <div ref={ref} className={className} data-slot="interactive-focus-surface" {...props}>
+      <div
+        ref={ref}
+        className={className}
+        data-slot="interactive-focus-surface"
+        {...props}
+      >
         {children}
       </div>
     </InteractiveFocusSurfaceContext.Provider>
@@ -200,10 +213,11 @@ export function useInteractiveFocusRegistration(options: {
   const ctx = React.useContext(InteractiveFocusContext)
   const surface = useInteractiveFocusSurface()
   const id = React.useId()
-  const [focused, setFocused] = React.useState(!options.enabled)
+  const [soloFocused, setSoloFocused] = React.useState(false)
   const onFocusChangeRef = React.useRef(options.onFocusChange)
   const triggersRef = React.useRef(options.triggers)
   const priority = options.priority ?? 0
+  const entryRef = React.useRef<InteractiveFocusEntry | null>(null)
 
   React.useEffect(() => {
     onFocusChangeRef.current = options.onFocusChange
@@ -213,60 +227,67 @@ export function useInteractiveFocusRegistration(options: {
     triggersRef.current = options.triggers
   }, [options.triggers])
 
+  const focused = !options.enabled
+    ? true
+    : ctx
+      ? ctx.focusedId === id
+      : soloFocused
+
+  React.useEffect(() => {
+    if (!options.enabled) return
+    onFocusChangeRef.current?.(focused)
+  }, [focused, options.enabled])
+
   const activate = React.useCallback(() => {
-    setFocused(true)
-    onFocusChangeRef.current?.(true)
     options.rootRef.current?.focus({ preventScroll: true })
   }, [options.rootRef])
 
   const deactivate = React.useCallback(() => {
-    setFocused(false)
-    onFocusChangeRef.current?.(false)
-  }, [])
+    blurEntryRoot(() => options.rootRef.current)
+  }, [options.rootRef])
 
   React.useEffect(() => {
-    if (!options.enabled) {
-      setFocused(true)
-      return
-    }
+    if (!options.enabled) return
 
     if (!ctx) {
-      // Solo mode: active after first pointer hit on root/triggers/surface.
-      setFocused(false)
+      setSoloFocused(false)
       const onPointerDown = (event: PointerEvent) => {
         const target = event.target
         const root = options.rootRef.current
-        const triggers = [
-          ...(triggersRef.current ?? []),
-          surface,
-        ]
+        const triggers = [...(triggersRef.current ?? []), surface]
         const hit =
-          (root != null && target instanceof Node && root.contains(target)) ||
+          (root != null &&
+            target instanceof Node &&
+            root.contains(target)) ||
           triggers.some((trigger) => {
             const el = resolveElement(trigger)
-            return el != null && target instanceof Node && el.contains(target)
+            return (
+              el != null && target instanceof Node && el.contains(target)
+            )
           })
         if (hit) {
-          setFocused(true)
-          onFocusChangeRef.current?.(true)
+          setSoloFocused(true)
           options.rootRef.current?.focus({ preventScroll: true })
           return
         }
-        setFocused(false)
-        onFocusChangeRef.current?.(false)
+        setSoloFocused(false)
+        blurEntryRoot(() => options.rootRef.current)
       }
       document.addEventListener("pointerdown", onPointerDown, true)
-      return () => document.removeEventListener("pointerdown", onPointerDown, true)
+      return () =>
+        document.removeEventListener("pointerdown", onPointerDown, true)
     }
 
-    return ctx.register({
+    const entry: InteractiveFocusEntry = {
       id,
       priority,
       getRoot: () => options.rootRef.current,
       getTriggers: () => [...(triggersRef.current ?? []), surface],
       activate,
       deactivate,
-    })
+    }
+    entryRef.current = entry
+    return ctx.register(entry)
   }, [
     activate,
     ctx,
@@ -284,13 +305,12 @@ export function useInteractiveFocusRegistration(options: {
       ctx.requestFocus(id)
       return
     }
-    setFocused(true)
-    onFocusChangeRef.current?.(true)
+    setSoloFocused(true)
     options.rootRef.current?.focus({ preventScroll: true })
   }, [ctx, id, options.enabled, options.rootRef])
 
   return {
-    focused: options.enabled ? focused : true,
+    focused,
     requestFocus,
     focusedId: ctx?.focusedId ?? null,
   }

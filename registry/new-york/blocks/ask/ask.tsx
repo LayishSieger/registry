@@ -1197,10 +1197,11 @@ export function Ask({
   React.useEffect(() => {
     if (!focusable || !keyboardArmed) return
     const onKeyDown = (event: KeyboardEvent) => {
+      // Only the armed instance should handle keys; stop others if any linger.
       handleAskKeyDownRef.current(event)
     }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
+    window.addEventListener("keydown", onKeyDown, true)
+    return () => window.removeEventListener("keydown", onKeyDown, true)
   }, [focusable, keyboardArmed])
 
   function goToNextFrom(fromName: string) {
@@ -1435,6 +1436,7 @@ export function Ask({
             phase === "questions" &&
             "relative",
           showCancel && phase === "questions" && !plain && "pt-2",
+          focusable && !plain && !interactiveFocused && "ring-0!",
           focusable &&
             !plain &&
             interactiveFocused &&
