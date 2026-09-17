@@ -72,9 +72,6 @@ const PLAIN_ROW_CLASS =
 
 const TOUCH_ACTION_CLASS = "min-h-11 sm:min-h-0"
 
-const FOCUS_OUTLINE_CLASS =
-  "outline outline-2 outline-offset-2 outline-ring/60"
-
 const BATCH_BADGE_CLASS =
   "inline-flex size-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-medium"
 
@@ -311,11 +308,15 @@ function activeChoiceInputs(form: HTMLFormElement | null) {
   ]
   const active = items.find((item) => !item.hidden)
   if (!active) return []
-  return [
+  const choices = [
     ...active.querySelectorAll<HTMLInputElement>(
       "[data-slot=questionnaire-choice-input]",
     ),
   ].filter((input) => !input.disabled)
+  const other = active.querySelector<HTMLInputElement>(
+    "[data-slot=questionnaire-other-row] input:not([disabled])",
+  )
+  return other ? [...choices, other] : choices
 }
 
 function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
@@ -1101,13 +1102,14 @@ export function Ask({
 
     const form = formRef.current
     const target = event.target
+    const key = event.key
+    // ↑/↓ still cycle choices (including Other) while the Other text field is focused.
+    const isVerticalChoiceNav = key === "ArrowUp" || key === "ArrowDown"
     if (form && target instanceof Node && !form.contains(target)) {
       if (isEditableTarget(target)) return
-    } else if (isEditableTarget(target)) {
+    } else if (isEditableTarget(target) && !isVerticalChoiceNav) {
       return
     }
-
-    const key = event.key
 
     if (phase === "review") {
       if (key === "ArrowLeft") {
@@ -1125,7 +1127,7 @@ export function Ask({
       return
     }
 
-    if (key === "ArrowUp" || key === "ArrowDown") {
+    if (isVerticalChoiceNav) {
       event.preventDefault()
       if ("stopPropagation" in event) event.stopPropagation()
       moveChoiceFocus(form, key === "ArrowDown" ? 1 : -1)
@@ -1451,11 +1453,10 @@ export function Ask({
             phase === "questions" &&
             "relative",
           showCancel && phase === "questions" && !plain && "pt-2",
-          // Keep the default card ring; add a separate focus outline on top.
-          focusable &&
-            !plain &&
-            interactiveFocused &&
-            FOCUS_OUTLINE_CLASS,
+          // Unfocused: no ring; muted surface so the card still reads against the
+          // preview/page background (same idea as dark-mode card vs background).
+          // Focused: restore the default card ring as the only focus chrome.
+          focusable && !plain && !interactiveFocused && "bg-muted ring-0",
         )}
       >
         {showCancel && phase === "questions" ? (
