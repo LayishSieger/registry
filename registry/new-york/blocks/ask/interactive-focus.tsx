@@ -56,7 +56,83 @@ function isEditableKeyboardTarget(target: EventTarget | null) {
   )
 }
 
-function eventInside(entry: InteractiveFocusEntry, target: EventTarget | null) {
+function findPortaledOverlay(target: EventTarget | null): Element | null {
+  if (!(target instanceof Element)) return null
+  return (
+    target.closest("[data-slot=popover-content]") ??
+    target.closest("[data-slot=dialog-content]") ??
+    target.closest("[role=dialog]")
+  )
+}
+
+/**
+ * Portaled popovers/dialogs sit outside the Ask root in the DOM. Treat them as
+ * owned when their trigger lives under `root` (aria-controls) or the root has
+ * an open popover/dialog trigger while the event is inside overlay content.
+ */
+export function isOwnedPortaledOverlay(
+  root: HTMLElement | null,
+  target: EventTarget | null,
+): boolean {
+  if (!root) return false
+  const overlay = findPortaledOverlay(target)
+  if (!overlay) return false
+
+  const overlayId = overlay.id
+  if (overlayId) {
+    try {
+      if (
+        root.querySelector(`[aria-controls="${CSS.escape(overlayId)}"]`)
+      ) {
+        return true
+      }
+    } catch {
+      // Invalid id — fall through to open-trigger heuristics.
+    }
+  }
+
+  const slot = overlay.getAttribute("data-slot")
+  if (
+    (slot === "popover-content" ||
+      overlay.closest("[data-slot=popover-content]") != null) &&
+    root.querySelector(
+      '[data-slot=popover-trigger][data-state=open], [data-slot=popover-trigger][aria-expanded="true"]',
+    )
+  ) {
+    return true
+  }
+
+  if (
+    (slot === "dialog-content" || overlay.getAttribute("role") === "dialog") &&
+    root.querySelector(
+      '[data-slot=dialog-trigger][data-state=open], [aria-haspopup="dialog"][aria-expanded="true"]',
+    )
+  ) {
+    return true
+  }
+
+  return false
+}
+
+/** True when `root` has an expanded popover/dialog trigger (portaled UI open). */
+export function rootHasOpenPortaledOverlay(
+  root: HTMLElement | null,
+): boolean {
+  if (!root) return false
+  return (
+    root.querySelector(
+      '[data-slot=popover-trigger][data-state=open], [data-slot=popover-trigger][aria-expanded="true"]',
+    ) != null ||
+    root.querySelector(
+      '[data-slot=dialog-trigger][data-state=open], [aria-haspopup="dialog"][aria-expanded="true"]',
+    ) != null
+  )
+}
+
+function eventInside(
+  entry: InteractiveFocusEntry,
+  target: EventTarget | null,
+) {
   if (!(target instanceof Node)) return false
   const root = entry.getRoot()
   if (root?.contains(target)) return true
@@ -64,6 +140,7 @@ function eventInside(entry: InteractiveFocusEntry, target: EventTarget | null) {
     const el = resolveElement(trigger)
     if (el?.contains(target)) return true
   }
+  if (isOwnedPortaledOverlay(root, target)) return true
   return false
 }
 
@@ -135,6 +212,16 @@ export function InteractiveFocusProvider({
       if (event.key !== "Tab") return
       if (event.defaultPrevented || event.isComposing) return
       if (isEditableKeyboardTarget(event.target)) return
+      // Let Tab move inside portaled confirm UI (e.g. cancel popover).
+      const focusedEntry = focusedIdRef.current
+        ? entriesRef.current.get(focusedIdRef.current)
+        : undefined
+      if (
+        focusedEntry &&
+        rootHasOpenPortaledOverlay(focusedEntry.getRoot())
+      ) {
+        return
+      }
       const ranked = [...entriesRef.current.values()].sort(
         (a, b) => b.priority - a.priority || a.id.localeCompare(b.id),
       )
@@ -265,10 +352,14 @@ export function useInteractiveFocusRegistration(options: {
             return (
               el != null && target instanceof Node && el.contains(target)
             )
-          })
+          }) ||
+          isOwnedPortaledOverlay(root, target)
         if (hit) {
           setSoloFocused(true)
-          options.rootRef.current?.focus({ preventScroll: true })
+          // Keep focus inside owned portals (cancel confirm) so buttons work.
+          if (!isOwnedPortaledOverlay(root, target)) {
+            options.rootRef.current?.focus({ preventScroll: true })
+          }
           return
         }
         setSoloFocused(false)

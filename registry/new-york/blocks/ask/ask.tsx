@@ -52,6 +52,8 @@ import { toast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 import {
   useInteractiveFocusRegistration,
+  isOwnedPortaledOverlay,
+  rootHasOpenPortaledOverlay,
   type InteractiveFocusTrigger,
 } from "@/registry/new-york/blocks/ask/interactive-focus"
 
@@ -1101,12 +1103,17 @@ export function Ask({
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
     const form = formRef.current
+    // Pause Ask shortcuts while cancel (or similar) confirm UI is open.
+    if (rootHasOpenPortaledOverlay(form)) return
+
     const target = event.target
     const key = event.key
     // ↑/↓ still cycle choices (including Other) while the Other text field is focused.
     const isVerticalChoiceNav = key === "ArrowUp" || key === "ArrowDown"
     if (form && target instanceof Node && !form.contains(target)) {
       if (isEditableTarget(target)) return
+      // Cancel (and similar) UI is portaled; don't drive Ask under it.
+      if (isOwnedPortaledOverlay(form, target)) return
     } else if (isEditableTarget(target) && !isVerticalChoiceNav) {
       return
     }
