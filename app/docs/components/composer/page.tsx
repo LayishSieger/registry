@@ -6,7 +6,9 @@ import { CodeBlock } from "@/components/code-block"
 import {
   ComposerDefaultPreview,
   ComposerFocusSendPreview,
+  ComposerShortcutsOffPreview,
   ComposerSpeechInputPreview,
+  ComposerTooltipsOffPreview,
   ComposerUseChatPreview,
 } from "@/components/composer-preview"
 import { CopyCommand } from "@/components/copy-command"
@@ -131,7 +133,9 @@ export default function ComposerPage() {
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               enterKeyBehavior=&quot;focus-send&quot;
             </code>{" "}
-            so the first Enter focuses send and the second Enter submits.
+            so the first Enter focuses send and the second Enter submits. After
+            submit, focus returns to the field so Enter does not immediately hit
+            Stop.
           </p>
           <RegistryExample>
             <ComposerFocusSendPreview />
@@ -140,6 +144,18 @@ export default function ComposerPage() {
         <section className="flex flex-col gap-3">
           <Heading id="keyboard">Keyboard</Heading>
           <ComposerKeyboardDocs />
+          <RegistryExample
+            title="shortcuts off"
+            description="No Mod bindings and no Kbd tooltips."
+          >
+            <ComposerShortcutsOffPreview />
+          </RegistryExample>
+          <RegistryExample
+            title="tooltips off"
+            description="Bindings stay; hover Kbd tooltips hidden."
+          >
+            <ComposerTooltipsOffPreview />
+          </RegistryExample>
         </section>
         <section className="flex flex-col gap-3">
           <Heading id="speech-input">SpeechInput</Heading>

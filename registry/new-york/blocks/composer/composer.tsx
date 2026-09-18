@@ -33,9 +33,11 @@ export type ComposerSubmit = {
 export type ComposerStatus = "ready" | "submitted" | "streaming" | "error"
 
 /**
- * Enter in the field:
+ * Enter in the field (fine pointer / keyboard only):
  * - `submit` — Enter sends (default). Shift+Enter inserts a newline.
  * - `focus-send` — first Enter focuses the send button; Enter on send submits.
+ *   After submit, focus returns to the field so Enter cannot immediately stop.
+ * Touch / coarse pointers: Enter always inserts a newline; send via the button.
  */
 export type ComposerEnterKeyBehavior = "submit" | "focus-send"
 
@@ -116,6 +118,26 @@ function useModKey() {
   )
 }
 
+/** True for mouse/trackpad hover devices — false on touch / coarse pointers. */
+function useFinePointerHover() {
+  return React.useSyncExternalStore(
+    (onStoreChange) => {
+      const mq = window.matchMedia("(hover: hover) and (pointer: fine)")
+      mq.addEventListener("change", onStoreChange)
+      return () => mq.removeEventListener("change", onStoreChange)
+    },
+    () => window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+    () => false,
+  )
+}
+
+function isModeShortcut(event: KeyboardEvent) {
+  if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) {
+    return false
+  }
+  return event.code === "Slash" || event.key === "/" || event.key === "?"
+}
+
 function formatShortcutLabel(shortcut: string, modKey: string) {
   return shortcut
     .split("+")
@@ -176,11 +198,22 @@ function ShortcutTooltip({
   modKey: string
   children: React.ReactElement
 }) {
+  const [open, setOpen] = React.useState(false)
+
   if (!enabled) return children
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger
+        asChild
+        onPointerDown={() => setOpen(false)}
+        onClick={() => setOpen(false)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") setOpen(false)
+        }}
+      >
+        {children}
+      </TooltipTrigger>
       <TooltipContent className="flex items-center gap-2">
         {label}
         <ComposerShortcutKbd shortcut={shortcut} modKey={modKey} />
@@ -226,12 +259,15 @@ export function Composer({
   shortcutTooltips = true,
 }: ComposerProps) {
   const modKey = useModKey()
-  const showShortcutTooltips = shortcuts && shortcutTooltips
+  const finePointer = useFinePointerHover()
+  const shortcutsActive = shortcuts && finePointer
+  const showShortcutTooltips = shortcutsActive && shortcutTooltips
   const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue)
   const isControlled = valueProp != null
   const value = isControlled ? valueProp : uncontrolledValue
   const [files, setFiles] = React.useState<File[]>([])
   const rootRef = React.useRef<HTMLDivElement>(null)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const sendButtonRef = React.useRef<HTMLButtonElement>(null)
   const busy = isBusy(status)
@@ -255,6 +291,11 @@ export function Composer({
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  function blurSendAfterSubmit() {
+    sendButtonRef.current?.blur()
+    textareaRef.current?.focus()
+  }
+
   function submit() {
     if (!canSubmit) return
     onSubmit?.({
@@ -262,6 +303,7 @@ export function Composer({
       files: files.length > 0 ? files : undefined,
     })
     clearAfterSubmit()
+    blurSendAfterSubmit()
   }
 
   function handlePrimaryAction() {
@@ -303,6 +345,9 @@ export function Composer({
   function handleEnterKey(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.nativeEvent.isComposing) return
 
+    // Touch / coarse: Enter inserts a newline; send only via the button.
+    if (!finePointer) return
+
     if (isMod(event) && event.key === "Enter") {
       event.preventDefault()
       if (busy) {
@@ -335,7 +380,7 @@ export function Composer({
   }
 
   React.useEffect(() => {
-    if (!shortcuts) return
+    if (!shortcutsActive) return
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.isComposing) return
@@ -343,10 +388,15 @@ export function Composer({
       const active = document.activeElement
       const inside =
         active instanceof Node && rootRef.current.contains(active)
-      if (!inside && active !== document.body) return
+      if (!inside) return
 
-      const mod = isMod(event)
-      if (!mod) return
+      if (isModeShortcut(event)) {
+        event.preventDefault()
+        activateAction("mode")
+        return
+      }
+
+      if (!isMod(event)) return
 
       if (event.shiftKey && event.key.toLowerCase() === "a") {
         event.preventDefault()
@@ -358,20 +408,15 @@ export function Composer({
         activateAction("dictation")
         return
       }
-      if (event.key === "/") {
-        event.preventDefault()
-        activateAction("mode")
-        return
-      }
       if (event.key === "Enter") {
         event.preventDefault()
         activateAction("send")
       }
     }
 
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [shortcuts, disabled, busy, canSubmit, status])
+    window.addEventListener("keydown", onKeyDown, true)
+    return () => window.removeEventListener("keydown", onKeyDown, true)
+  }, [shortcutsActive, disabled, busy, canSubmit, status])
 
   const resolvedMode = resolveSlot(modeSlot, slotProps)
   const resolvedMic =
@@ -402,6 +447,9 @@ export function Composer({
   const primaryLabel = busy ? "Stop generating" : "Send message"
   const primaryDisabled = disabled || (!busy && !canSubmit)
   const sendShortcut = formatShortcutLabel(COMPOSER_SHORTCUTS.send, modKey)
+  const ariaKeyshortcuts = finePointer
+    ? `Enter ${sendShortcut} Shift+Enter`
+    : undefined
 
   const sendControl = (
     <InputGroupButton
@@ -459,11 +507,12 @@ export function Composer({
             }}
           />
           <InputGroupTextarea
+            ref={textareaRef}
             value={value}
             disabled={disabled || busy}
             placeholder={placeholder}
             rows={1}
-            aria-keyshortcuts={`Enter ${sendShortcut} Shift+Enter`}
+            aria-keyshortcuts={ariaKeyshortcuts}
             className="field-sizing-content max-h-48 min-h-12 resize-none px-4 pt-3.5 pb-2 text-sm"
             onChange={(event) => setValue(event.currentTarget.value)}
             onKeyDown={handleEnterKey}

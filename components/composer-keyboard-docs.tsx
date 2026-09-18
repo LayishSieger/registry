@@ -60,11 +60,10 @@ export function ComposerKeyboardDocs() {
       </div>
       <p className="text-sm text-muted-foreground">
         Modifier is <Kbd>⌘</Kbd> on macOS and <Kbd>Ctrl</Kbd> elsewhere.
-        Shortcuts show as tooltips on the composer controls when{" "}
-        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-          shortcutTooltips
-        </code>{" "}
-        is enabled (default). Set{" "}
+        Shortcuts only run while focus is inside the composer (they do not fire
+        against the page body). On touch / coarse pointers, shortcuts and Kbd
+        tooltips are off and Enter inserts a newline — send with the button.
+        Tooltips dismiss on click. Set{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
           shortcuts=&#123;false&#125;
         </code>{" "}

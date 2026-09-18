@@ -340,3 +340,59 @@ export function ComposerUseChatPreview() {
     </div>
   )
 }
+
+export function ComposerShortcutsOffPreview() {
+  const demo = useComposerDemo("plan")
+
+  return (
+    <PreviewShell title="shortcuts={false}">
+      <Composer
+        shortcuts={false}
+        value={demo.text}
+        onValueChange={demo.setText}
+        status={demo.status}
+        onStop={demo.handleStop}
+        onSubmit={demo.handleSubmit}
+        placeholder="No keyboard shortcuts or Kbd tooltips"
+        modeSlot={({ disabled }) => (
+          <ModeSelect
+            value={demo.mode}
+            onValueChange={demo.setMode}
+            disabled={disabled}
+          />
+        )}
+      />
+      {demo.last ? (
+        <p className="text-sm text-muted-foreground">{demo.last}</p>
+      ) : null}
+    </PreviewShell>
+  )
+}
+
+export function ComposerTooltipsOffPreview() {
+  const demo = useComposerDemo("debug")
+
+  return (
+    <PreviewShell title="shortcutTooltips={false}">
+      <Composer
+        shortcutTooltips={false}
+        value={demo.text}
+        onValueChange={demo.setText}
+        status={demo.status}
+        onStop={demo.handleStop}
+        onSubmit={demo.handleSubmit}
+        placeholder="Shortcuts stay; hover tooltips off"
+        modeSlot={({ disabled }) => (
+          <ModeSelect
+            value={demo.mode}
+            onValueChange={demo.setMode}
+            disabled={disabled}
+          />
+        )}
+      />
+      {demo.last ? (
+        <p className="text-sm text-muted-foreground">{demo.last}</p>
+      ) : null}
+    </PreviewShell>
+  )
+}
