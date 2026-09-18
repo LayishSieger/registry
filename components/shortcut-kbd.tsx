@@ -1,10 +1,10 @@
 "use client"
 
+import { ComposerShortcutKbd } from "@/registry/new-york/blocks/composer/composer"
 import {
-  ComposerShortcutKbd,
-} from "@/registry/new-york/blocks/composer/composer"
-import { useModKey } from "@/hooks/use-mod-key"
-import { cn } from "@/lib/utils"
+  formatShortcutLabel,
+  useModKey,
+} from "@/hooks/use-mod-key"
 
 export function ShortcutKbd({
   shortcut,
@@ -20,15 +20,12 @@ export function ShortcutKbd({
     <ComposerShortcutKbd
       shortcut={shortcut}
       modKey={modKey}
-      className={cn(className)}
+      className={className}
     />
   )
 }
 
 export function useShortcutLabel(shortcut: string) {
   const modKey = useModKey()
-  return shortcut
-    .split("+")
-    .map((part) => (part === "Mod" ? modKey : part))
-    .join("+")
+  return formatShortcutLabel(shortcut, modKey)
 }

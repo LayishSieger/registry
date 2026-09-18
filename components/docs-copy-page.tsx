@@ -29,8 +29,6 @@ export function DocsCopyPage({
   const { copyToClipboard, isCopied } = useCopyToClipboard()
 
   function pageUrl() {
-    // Prefer the live origin when copying in the browser (preview/prod/local).
-    // Fall back to the configured site base for SSR/non-window contexts.
     if (typeof window !== "undefined") {
       return `${window.location.origin}${path}`
     }

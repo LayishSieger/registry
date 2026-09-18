@@ -381,26 +381,23 @@ export function Composer({
       resolveSlot(micSlot, slotProps)
     )
 
-  const attachControl =
-    attachSlot === undefined ? (
-      <InputGroupButton
-        type="button"
-        size="icon-sm"
-        variant="outline"
-        disabled={slotProps.disabled}
-        aria-label="Attach files"
-        data-composer-action="attach"
-        className={cn(
-          CIRCLE_BTN,
-          "border-border bg-background dark:bg-background",
-        )}
-        onClick={openFilePicker}
-      >
-        <PlusIcon />
-      </InputGroupButton>
-    ) : (
-      resolveSlot(attachSlot, slotProps)
-    )
+  const defaultAttachButton = (
+    <InputGroupButton
+      type="button"
+      size="icon-sm"
+      variant="outline"
+      disabled={slotProps.disabled}
+      aria-label="Attach files"
+      data-composer-action="attach"
+      className={cn(
+        CIRCLE_BTN,
+        "border-border bg-background dark:bg-background",
+      )}
+      onClick={openFilePicker}
+    >
+      <PlusIcon />
+    </InputGroupButton>
+  )
 
   const primaryLabel = busy ? "Stop generating" : "Send message"
   const primaryDisabled = disabled || (!busy && !canSubmit)
@@ -441,7 +438,6 @@ export function Composer({
         <InputGroup
           className={cn(
             "w-full rounded-[1.75rem] border-border/70 bg-muted/40 shadow-none dark:bg-muted/50",
-            // Subtle focus — thin soft ring instead of a loud glow
             "has-[[data-slot=input-group-control]:focus-visible]:border-ring/60",
             "has-[[data-slot=input-group-control]:focus-visible]:ring-1",
             "has-[[data-slot=input-group-control]:focus-visible]:ring-ring/25",
@@ -484,10 +480,10 @@ export function Composer({
                   shortcut={COMPOSER_SHORTCUTS.attach}
                   modKey={modKey}
                 >
-                  {attachControl as React.ReactElement}
+                  {defaultAttachButton}
                 </ShortcutTooltip>
               ) : (
-                attachControl
+                resolveSlot(attachSlot, slotProps)
               )}
               {resolvedMode != null ? (
                 <ShortcutTooltip

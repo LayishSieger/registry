@@ -14,8 +14,6 @@ export function OpenInV0Button({
   name,
   className,
 }: { name: string } & React.ComponentProps<typeof Button>) {
-  // Start with the configured public site URL (matches SSR), then switch to the
-  // live origin so preview deployments open their own /r item instead of prod.
   const [itemUrl, setItemUrl] = useState(() =>
     buildRegistryItemUrl(getSiteUrl(), name)
   )
