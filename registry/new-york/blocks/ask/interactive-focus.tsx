@@ -79,16 +79,11 @@ export function isOwnedPortaledOverlay(
   if (!overlay) return false
 
   const overlayId = overlay.id
-  if (overlayId) {
-    try {
-      if (
-        root.querySelector(`[aria-controls="${CSS.escape(overlayId)}"]`)
-      ) {
-        return true
-      }
-    } catch {
-      // Invalid id — fall through to open-trigger heuristics.
-    }
+  if (
+    overlayId &&
+    root.querySelector(`[aria-controls="${CSS.escape(overlayId)}"]`)
+  ) {
+    return true
   }
 
   const slot = overlay.getAttribute("data-slot")
@@ -114,7 +109,6 @@ export function isOwnedPortaledOverlay(
   return false
 }
 
-/** True when `root` has an expanded popover/dialog trigger (portaled UI open). */
 export function rootHasOpenPortaledOverlay(
   root: HTMLElement | null,
 ): boolean {
@@ -151,9 +145,7 @@ function blurEntryRoot(getRoot: () => HTMLElement | null) {
   if (active instanceof HTMLElement && root.contains(active)) {
     active.blur()
   }
-  if (typeof root.blur === "function") {
-    root.blur()
-  }
+  root.blur()
 }
 
 export function InteractiveFocusProvider({
@@ -212,10 +204,10 @@ export function InteractiveFocusProvider({
       if (event.key !== "Tab") return
       if (event.defaultPrevented || event.isComposing) return
       if (isEditableKeyboardTarget(event.target)) return
-      // Let Tab move inside portaled confirm UI (e.g. cancel popover).
       const focusedEntry = focusedIdRef.current
         ? entriesRef.current.get(focusedIdRef.current)
         : undefined
+      // Let Tab move inside portaled confirm UI (e.g. cancel popover).
       if (
         focusedEntry &&
         rootHasOpenPortaledOverlay(focusedEntry.getRoot())
@@ -226,7 +218,6 @@ export function InteractiveFocusProvider({
         (a, b) => b.priority - a.priority || a.id.localeCompare(b.id),
       )
       if (ranked.length < 2) return
-      // Only cycle once a card is already armed.
       if (focusedIdRef.current == null) return
 
       event.preventDefault()

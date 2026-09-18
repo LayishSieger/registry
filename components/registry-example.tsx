@@ -16,7 +16,6 @@ export function RegistryExample({
   description?: string
   name?: string
   children: ReactNode
-  /** Mark the preview chrome as an interactive focus surface (needs a parent provider). */
   interactiveFocus?: boolean
 }) {
   const hasHeader = Boolean(title || description || name)

@@ -1103,7 +1103,6 @@ export function Ask({
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
     const form = formRef.current
-    // Pause Ask shortcuts while cancel (or similar) confirm UI is open.
     if (rootHasOpenPortaledOverlay(form)) return
 
     const target = event.target
@@ -1112,7 +1111,6 @@ export function Ask({
     const isVerticalChoiceNav = key === "ArrowUp" || key === "ArrowDown"
     if (form && target instanceof Node && !form.contains(target)) {
       if (isEditableTarget(target)) return
-      // Cancel (and similar) UI is portaled; don't drive Ask under it.
       if (isOwnedPortaledOverlay(form, target)) return
     } else if (isEditableTarget(target) && !isVerticalChoiceNav) {
       return
@@ -1136,22 +1134,21 @@ export function Ask({
 
     if (isVerticalChoiceNav) {
       event.preventDefault()
-      if ("stopPropagation" in event) event.stopPropagation()
+      event.stopPropagation()
       moveChoiceFocus(form, key === "ArrowDown" ? 1 : -1)
       return
     }
 
     if (key === "ArrowLeft") {
-      // Prevent native radio group ←/→ from changing answers.
       event.preventDefault()
-      if ("stopPropagation" in event) event.stopPropagation()
+      event.stopPropagation()
       clickSlot(form, "previous")
       return
     }
 
     if (key === "ArrowRight") {
       event.preventDefault()
-      if ("stopPropagation" in event) event.stopPropagation()
+      event.stopPropagation()
       if (nextIsShowing) {
         if (showReviewNext) {
           if (hasAnswer) enterReview()
@@ -1210,7 +1207,6 @@ export function Ask({
   React.useEffect(() => {
     if (!focusable || !keyboardArmed) return
     // Capture-phase so ←/→ never hit native radio group navigation.
-    // Only arrows here; Enter/numbers stay on the form handler.
     const onKeyDown = (event: KeyboardEvent) => {
       if (
         event.key !== "ArrowLeft" &&
@@ -1428,38 +1424,34 @@ export function Ask({
   }
 
   return (
-      <Questionnaire
-        ref={formRef}
-        tabIndex={-1}
-        data-ask-focused={interactiveFocused ? "true" : "false"}
-        className={cn("w-full outline-none", className)}
-        defaultItem={defaultItem}
-        item={activeItem || undefined}
-        items={collection}
-        shortcuts={shortcuts === false ? undefined : shortcuts}
-        onItemChange={handleItemChange}
-        onKeyDown={(event) => {
-          if (focusable && !keyboardArmed) {
-            // Form may still be focused briefly; don't let Questionnaire act.
-            event.preventDefault()
-            event.stopPropagation()
-            return
-          }
-          handleAskKeyDownRef.current(event)
-        }}
-        onSubmit={handleSubmit}
-      >
+    <Questionnaire
+      ref={formRef}
+      tabIndex={-1}
+      data-ask-focused={interactiveFocused ? "true" : "false"}
+      className={cn("w-full outline-none", className)}
+      defaultItem={defaultItem}
+      item={activeItem || undefined}
+      items={collection}
+      shortcuts={shortcuts === false ? undefined : shortcuts}
+      onItemChange={handleItemChange}
+      onKeyDown={(event) => {
+        if (focusable && !keyboardArmed) {
+          // Form may still be focused briefly; don't let Questionnaire act.
+          event.preventDefault()
+          event.stopPropagation()
+          return
+        }
+        handleAskKeyDownRef.current(event)
+      }}
+      onSubmit={handleSubmit}
+    >
       <Card
         className={cn(
           !plain && "gap-2!",
           plain &&
             "gap-4 rounded-none bg-transparent py-0 ring-0 [--card-spacing:--spacing(0)] has-data-[slot=card-footer]:pb-0",
-          showCancel &&
-            phase === "questions" &&
-            "relative",
+          showCancel && phase === "questions" && "relative",
           showCancel && phase === "questions" && !plain && "pt-2",
-          // One elevated surface for both states (lighter than muted/accent so
-          // option hover still reads). Focus only restores the default card ring.
           focusable && !plain && "bg-sidebar",
           focusable && !plain && !interactiveFocused && "ring-0",
         )}
@@ -1822,6 +1814,6 @@ export function Ask({
           </CardFooter>
         ) : null}
       </Card>
-      </Questionnaire>
+    </Questionnaire>
   )
 }
