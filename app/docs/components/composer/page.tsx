@@ -146,7 +146,7 @@ export default function ComposerPage() {
           <ComposerKeyboardDocs />
           <RegistryExample
             title="shortcuts off"
-            description="No Mod bindings and no Kbd tooltips."
+            description="No Mod action bindings or Kbd tooltips. Enter / Shift+Enter / Mod+Enter send behavior still applies on desktop."
           >
             <ComposerShortcutsOffPreview />
           </RegistryExample>
