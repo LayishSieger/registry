@@ -403,6 +403,7 @@ export function Composer({
         return
       }
       if (event.shiftKey && event.key.toLowerCase() === "o") {
+        if (event.repeat) return
         event.preventDefault()
         activateAction("mode")
         return
@@ -539,19 +540,9 @@ export function Composer({
                 resolveSlot(attachSlot, slotProps)
               )}
               {resolvedMode != null ? (
-                <ShortcutTooltip
-                  enabled={showShortcutTooltips}
-                  label="Mode"
-                  shortcut={COMPOSER_SHORTCUTS.mode}
-                  modKey={modKey}
-                >
-                  <span
-                    data-composer-action="mode"
-                    className="inline-flex"
-                  >
-                    {resolvedMode}
-                  </span>
-                </ShortcutTooltip>
+                <div className="inline-flex min-w-0 items-center">
+                  {resolvedMode}
+                </div>
               ) : null}
             </div>
             <div className="ml-auto flex items-center gap-1.5">

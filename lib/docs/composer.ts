@@ -91,7 +91,7 @@ Enter sends. Shift+Enter inserts a newline. Attach + mode sit on the start of th
 | Shortcut | Action |
 | --- | --- |
 | ⌘/Ctrl+Shift+A | Attach |
-| ⌘/Ctrl+Shift+O | Mode |
+| ⌘/Ctrl+Shift+O | Expand / collapse mode chips (each press toggles) |
 | ⌘/Ctrl+Shift+D | Dictation / mic slot |
 | Enter / ⌘/Ctrl+Enter | Send (or stop when busy) |
 | Shift+Enter | Newline |

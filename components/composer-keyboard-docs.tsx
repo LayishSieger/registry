@@ -10,7 +10,7 @@ import { useModKey } from "@/hooks/use-mod-key"
 
 const ROWS = [
   { shortcut: COMPOSER_SHORTCUTS.attach, action: "Attach" },
-  { shortcut: COMPOSER_SHORTCUTS.mode, action: "Mode" },
+  { shortcut: COMPOSER_SHORTCUTS.mode, action: "Expand / collapse mode chips" },
   { shortcut: COMPOSER_SHORTCUTS.dictation, action: "Dictation / mic" },
 ] as const
 
