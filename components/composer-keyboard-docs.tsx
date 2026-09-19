@@ -59,19 +59,28 @@ export function ComposerKeyboardDocs() {
         </table>
       </div>
       <p className="text-sm text-muted-foreground">
-        Modifier is <Kbd>⌘</Kbd> on macOS and <Kbd>Ctrl</Kbd> elsewhere.
-        Shortcuts only run while focus is inside the composer (they do not fire
-        against the page body). On touch / coarse pointers, shortcuts and Kbd
-        tooltips are off and Enter inserts a newline — send with the button.
-        Tooltips dismiss on click. Set{" "}
+        On desktop (fine pointer), modifier is <Kbd>⌘</Kbd> on macOS and{" "}
+        <Kbd>Ctrl</Kbd> elsewhere — both currently match as Mod. Shortcuts only
+        run while focus is inside the composer. On touch / coarse pointers, Mod
+        shortcuts and Kbd tooltips are off and Enter inserts a newline — send
+        with the button. Tooltips dismiss on click.
+      </p>
+      <p className="text-sm text-muted-foreground">
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
           shortcuts=&#123;false&#125;
         </code>{" "}
-        to disable bindings and tooltips, or{" "}
+        turns off Mod action bindings (attach / mode / dictation) and tooltips.
+        It does <span className="text-foreground">not</span> disable field Enter
+        behavior:{" "}
+        <ComposerShortcutKbd shortcut="Shift+Enter" modKey={modKey} /> still
+        inserts a newline, and{" "}
+        <ComposerShortcutKbd shortcut="Enter" modKey={modKey} /> /{" "}
+        <ShortcutKbd shortcut={COMPOSER_SHORTCUTS.send} /> still send or stop
+        while busy (on fine pointers). Set{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
           shortcutTooltips=&#123;false&#125;
         </code>{" "}
-        to keep bindings without hover hints.
+        to keep Mod bindings without hover hints.
       </p>
     </>
   )

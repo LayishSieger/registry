@@ -67,7 +67,7 @@ export type ComposerProps = {
   accept?: string
   multiple?: boolean
   onFilesChange?: (files: File[]) => void
-  /** Enable built-in keyboard shortcuts. Default true. */
+  /** Enable Mod action shortcuts (attach / mode / dictation). Default true. Field Enter / Shift+Enter / Mod+Enter send behavior is separate. */
   shortcuts?: boolean
   /**
    * Show Kbd shortcut tooltips on attach / mode / mic / send.
@@ -79,7 +79,7 @@ export type ComposerProps = {
 
 export const COMPOSER_SHORTCUTS = {
   attach: "Mod+Shift+A",
-  mode: "Mod+/",
+  mode: "Mod+Shift+O",
   dictation: "Mod+Shift+D",
   send: "Mod+Enter",
 } as const
@@ -129,13 +129,6 @@ function useFinePointerHover() {
     () => window.matchMedia("(hover: hover) and (pointer: fine)").matches,
     () => false,
   )
-}
-
-function isModeShortcut(event: KeyboardEvent) {
-  if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) {
-    return false
-  }
-  return event.code === "Slash" || event.key === "/" || event.key === "?"
 }
 
 function formatShortcutLabel(shortcut: string, modKey: string) {
@@ -390,17 +383,16 @@ export function Composer({
         active instanceof Node && rootRef.current.contains(active)
       if (!inside) return
 
-      if (isModeShortcut(event)) {
-        event.preventDefault()
-        activateAction("mode")
-        return
-      }
-
-      if (!isMod(event)) return
+      if (!isMod(event) || event.altKey) return
 
       if (event.shiftKey && event.key.toLowerCase() === "a") {
         event.preventDefault()
         activateAction("attach")
+        return
+      }
+      if (event.shiftKey && event.key.toLowerCase() === "o") {
+        event.preventDefault()
+        activateAction("mode")
         return
       }
       if (event.shiftKey && event.key.toLowerCase() === "d") {

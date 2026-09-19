@@ -353,7 +353,7 @@ export function ComposerShortcutsOffPreview() {
         status={demo.status}
         onStop={demo.handleStop}
         onSubmit={demo.handleSubmit}
-        placeholder="No keyboard shortcuts or Kbd tooltips"
+        placeholder="No Mod action shortcuts or Kbd tooltips — Enter / Shift+Enter still work"
         modeSlot={({ disabled }) => (
           <ModeSelect
             value={demo.mode}

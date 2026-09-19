@@ -91,12 +91,14 @@ Enter sends. Shift+Enter inserts a newline. Attach + mode sit on the start of th
 | Shortcut | Action |
 | --- | --- |
 | ⌘/Ctrl+Shift+A | Attach |
-| ⌘/Ctrl+/ | Mode |
+| ⌘/Ctrl+Shift+O | Mode |
 | ⌘/Ctrl+Shift+D | Dictation / mic slot |
 | Enter / ⌘/Ctrl+Enter | Send (or stop when busy) |
 | Shift+Enter | Newline |
 
-modifier is ⌘ on macOS and Ctrl elsewhere. Shortcuts only run while focus is inside the composer. On touch / coarse pointers, shortcuts and tooltips are off and Enter inserts a newline (send with the button). Tooltips dismiss on click. Set \`shortcuts={false}\` to disable bindings and tooltips, or \`shortcutTooltips={false}\` to keep bindings without hover hints.
+On fine-pointer (desktop) keyboards, modifier is ⌘ on macOS and Ctrl elsewhere; both ⌘ and Ctrl currently match as Mod. Shortcuts only run while focus is inside the composer. On touch / coarse pointers, Mod shortcuts and tooltips are off and Enter inserts a newline (send with the button). Tooltips dismiss on click.
+
+\`shortcuts={false}\` disables the Mod action bindings (attach / mode / dictation / Mod+Enter from the window listener) and tooltips. It does **not** change field Enter behavior: Shift+Enter still inserts a newline, and Enter / ⌘/Ctrl+Enter still send or stop per \`enterKeyBehavior\` (on fine pointers). Use a coarse pointer / touch device for newline-only Enter, or set \`enterKeyBehavior\` as needed.
 
 ## Slots
 
@@ -151,7 +153,7 @@ While \`status\` is \`submitted\` or \`streaming\`, the primary control becomes 
 | \`status\` | \`"ready" \\| "submitted" \\| "streaming" \\| "error"\` | \`"ready"\` | Drives send vs stop. |
 | \`onStop\` | \`() => void\` | — | Called when stop is pressed while busy. |
 | \`enterKeyBehavior\` | \`"submit" \\| "focus-send"\` | \`"submit"\` | Enter in the field (fine pointer only). |
-| \`shortcuts\` | \`boolean\` | \`true\` | Built-in keyboard shortcuts when focus is inside and pointer is fine. |
+| \`shortcuts\` | \`boolean\` | \`true\` | Mod action shortcuts (attach / mode / dictation) when focus is inside and pointer is fine. Does not disable field Enter / Shift+Enter / Mod+Enter send. |
 | \`shortcutTooltips\` | \`boolean\` | \`true\` | Kbd tooltips on attach / mode / mic / send (requires \`shortcuts\` + fine pointer). |
 | \`modeSlot\` | \`ReactNode \\| (props) => ReactNode\` | — | Purpose mode control. |
 | \`micSlot\` | \`ReactNode \\| (props) => ReactNode\` | default mic | Voice affordance slot. \`null\` hides it. |
