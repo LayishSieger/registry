@@ -109,10 +109,41 @@ function ModeSelect({
   const [expanded, setExpanded] = React.useState(false)
   const rootRef = React.useRef<HTMLDivElement>(null)
   const valueRef = React.useRef(value)
+  const collapseTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
+  const scrollSelectedAfterShortcutRef = React.useRef(false)
+
+  function clearShortcutCollapseTimer() {
+    if (collapseTimerRef.current) {
+      clearTimeout(collapseTimerRef.current)
+      collapseTimerRef.current = null
+    }
+  }
+
+  function scheduleShortcutCollapse() {
+    clearShortcutCollapseTimer()
+    collapseTimerRef.current = setTimeout(() => {
+      setExpanded(false)
+      collapseTimerRef.current = null
+    }, 3000)
+  }
 
   React.useEffect(() => {
     valueRef.current = value
   }, [value])
+
+  React.useEffect(() => {
+    if (!scrollSelectedAfterShortcutRef.current || !expanded) return
+    scrollSelectedAfterShortcutRef.current = false
+    rootRef.current
+      ?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      ?.scrollIntoView({ inline: "nearest", block: "nearest" })
+  }, [value, expanded])
+
+  React.useEffect(() => {
+    return () => clearShortcutCollapseTimer()
+  }, [])
 
   React.useEffect(() => {
     if (!expanded) return
@@ -120,6 +151,7 @@ function ModeSelect({
     function onPointerDown(event: PointerEvent) {
       if (!(event.target instanceof Node)) return
       if (rootRef.current?.contains(event.target)) return
+      clearShortcutCollapseTimer()
       setExpanded(false)
     }
 
@@ -133,8 +165,10 @@ function ModeSelect({
 
     function onModeShortcut() {
       if (disabled) return
+      scrollSelectedAfterShortcutRef.current = true
       setExpanded(true)
       onValueChange(nextModeValue(valueRef.current))
+      scheduleShortcutCollapse()
     }
 
     host.addEventListener(COMPOSER_MODE_SHORTCUT_EVENT, onModeShortcut)
@@ -149,7 +183,11 @@ function ModeSelect({
       role="group"
       aria-label="Composer mode"
       aria-expanded={expanded}
-      className="inline-flex min-w-0 items-center gap-1"
+      className={cn(
+        "inline-flex min-w-0 max-w-full items-center gap-1",
+        expanded &&
+          "overflow-x-auto overscroll-x-contain touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+      )}
     >
       {MODES.map((entry) => {
         const selected = entry.value === value
@@ -164,6 +202,7 @@ function ModeSelect({
             tabIndex={visible ? 0 : -1}
             aria-hidden={!visible}
             onClick={() => {
+              clearShortcutCollapseTimer()
               if (!expanded) {
                 setExpanded(true)
                 return

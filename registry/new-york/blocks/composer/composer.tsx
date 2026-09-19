@@ -532,28 +532,30 @@ export function Composer({
           />
           <InputGroupAddon
             align="block-end"
-            className="justify-between gap-2 px-1.5 pb-1.5 pt-0"
+            className="min-w-0 justify-between gap-2 px-1.5 pb-1.5 pt-0"
           >
-            <div className="flex items-center gap-1.5">
-              {attachSlot === undefined ? (
-                <ShortcutTooltip
-                  enabled={showShortcutTooltips}
-                  label="Attach"
-                  shortcut={COMPOSER_SHORTCUTS.attach}
-                  modKey={modKey}
-                >
-                  {defaultAttachButton}
-                </ShortcutTooltip>
-              ) : (
-                resolveSlot(attachSlot, slotProps)
-              )}
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+              <div className="shrink-0">
+                {attachSlot === undefined ? (
+                  <ShortcutTooltip
+                    enabled={showShortcutTooltips}
+                    label="Attach"
+                    shortcut={COMPOSER_SHORTCUTS.attach}
+                    modKey={modKey}
+                  >
+                    {defaultAttachButton}
+                  </ShortcutTooltip>
+                ) : (
+                  resolveSlot(attachSlot, slotProps)
+                )}
+              </div>
               {resolvedMode != null ? (
-                <div className="inline-flex min-w-0 items-center">
+                <div className="min-w-0 flex-1 overflow-hidden">
                   {resolvedMode}
                 </div>
               ) : null}
             </div>
-            <div className="ml-auto flex items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1.5">
               {resolvedMic != null ? (
                 <ShortcutTooltip
                   enabled={showShortcutTooltips}
