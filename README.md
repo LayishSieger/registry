@@ -61,6 +61,12 @@ pnpm registry:build   # writes public/r
 pnpm dev
 ```
 
+Built registry files are written to `public/r`.
+
+## Versioning
+
+Releases use [Changesets](https://github.com/changesets/changesets) (GitHub Releases only — not npm). See [VERSIONING.md](./VERSIONING.md) for bump rules and how to add a changeset.
+
 ## License
 
 MIT

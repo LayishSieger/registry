@@ -1,0 +1,56 @@
+# Fail PRs that change registry source without a changeset.
+# Docs/README-only PRs do not match these paths and skip this check.
+name: Changeset required
+
+on:
+  pull_request:
+    paths:
+      - "registry.json"
+      - "registry/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changeset:
+    name: Require changeset
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changeset
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          # Version Packages PR only bumps version/changelog; skip
+          if [[ "${HEAD_REF}" == changeset-release/* ]]; then
+            echo "Skipping Version Packages branch."
+            exit 0
+          fi
+
+          git fetch origin "${BASE_REF}" --depth=1
+          CHANGED=$(git diff --name-only "origin/${BASE_REF}"...HEAD)
+
+          HAS_REGISTRY=$(echo "${CHANGED}" | grep -E '^(registry\.json|registry/)' || true)
+          HAS_CHANGESET=$(echo "${CHANGED}" | grep -E '^\.changeset/.+\.md$' | grep -v '^\.changeset/README\.md$' || true)
+
+          if [[ -n "${HAS_REGISTRY}" && -z "${HAS_CHANGESET}" ]]; then
+            echo "::error::This PR changes registry.json or files under registry/ but has no changeset."
+            echo "Run: pnpm changeset"
+            echo "See VERSIONING.md for patch / minor / major guidance."
+            echo ""
+            echo "Changed registry paths:"
+            echo "${HAS_REGISTRY}"
+            exit 1
+          fi
+
+          echo "Changeset present for registry changes."

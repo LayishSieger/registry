@@ -498,7 +498,7 @@ export function Composer({
         ) : null}
         <InputGroup
           className={cn(
-            "w-full rounded-[1.75rem] border-border/70 bg-muted/40 shadow-none dark:bg-muted/50",
+            "w-full rounded-[1.375rem] border-border/70 bg-muted/40 shadow-none dark:bg-muted/50",
             "has-[[data-slot=input-group-control]:focus-visible]:border-ring/60",
             "has-[[data-slot=input-group-control]:focus-visible]:ring-1",
             "has-[[data-slot=input-group-control]:focus-visible]:ring-ring/25",
