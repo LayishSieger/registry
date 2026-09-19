@@ -84,6 +84,9 @@ export const COMPOSER_SHORTCUTS = {
   send: "Mod+Enter",
 } as const
 
+/** Dispatched on the composer root for Mod+Shift+O — mode slots should cycle + expand. */
+export const COMPOSER_MODE_SHORTCUT_EVENT = "composer:mode-shortcut"
+
 const CIRCLE_BTN =
   "size-8 shrink-0 rounded-full p-0 shadow-none [&_svg:not([class*='size-'])]:size-4"
 
@@ -198,16 +201,11 @@ function ShortcutTooltip({
   return (
     <Tooltip
       open={open}
-      onOpenChange={(next) => {
-        // Close from Radix; opens are hover-only so click/focus cannot stick
-        // the tip over a menu or after activation.
-        if (!next) setOpen(false)
-      }}
+      onOpenChange={setOpen}
+      disableHoverableContent
     >
       <TooltipTrigger
         asChild
-        onPointerEnter={() => setOpen(true)}
-        onPointerLeave={() => setOpen(false)}
         onPointerDown={() => setOpen(false)}
         onClick={() => setOpen(false)}
         onKeyDown={(event) => {
@@ -329,6 +327,12 @@ export function Composer({
     }
     if (action === "send") {
       handlePrimaryAction()
+      return
+    }
+    if (action === "mode") {
+      rootRef.current?.dispatchEvent(
+        new CustomEvent(COMPOSER_MODE_SHORTCUT_EVENT, { bubbles: true }),
+      )
       return
     }
     const root = rootRef.current
@@ -482,7 +486,11 @@ export function Composer({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div ref={rootRef} className="flex w-full flex-col gap-2">
+      <div
+        ref={rootRef}
+        data-composer-root=""
+        className="flex w-full flex-col gap-2"
+      >
         {files.length > 0 ? (
           <p className="px-1 text-xs text-muted-foreground">
             {files.length} file{files.length === 1 ? "" : "s"} attached

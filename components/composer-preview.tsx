@@ -1,11 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { ChevronDownIcon } from "lucide-react"
 
 import { SpeechInput } from "@/components/ai-elements/speech-input"
 import { Button } from "@/components/ui/button"
-import { InputGroupButton } from "@/components/ui/input-group"
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +18,7 @@ import type {
 import {
   Composer,
   ComposerShortcutKbd,
+  COMPOSER_MODE_SHORTCUT_EVENT,
   COMPOSER_SHORTCUTS,
 } from "@/registry/new-york/blocks/composer/composer"
 
@@ -54,7 +53,13 @@ const MODES = [
   },
 ] as const
 
-function ModeToggleTooltip({
+function nextModeValue(current: string) {
+  const index = MODES.findIndex((entry) => entry.value === current)
+  const from = index >= 0 ? index : 0
+  return MODES[(from + 1) % MODES.length].value
+}
+
+function ModeChipTooltip({
   enabled,
   children,
 }: {
@@ -64,19 +69,16 @@ function ModeToggleTooltip({
   const modKey = useModKey()
   const [open, setOpen] = React.useState(false)
 
+  React.useEffect(() => {
+    if (!enabled) setOpen(false)
+  }, [enabled])
+
   if (!enabled) return children
 
   return (
-    <Tooltip
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) setOpen(false)
-      }}
-    >
+    <Tooltip open={open} onOpenChange={setOpen} disableHoverableContent>
       <TooltipTrigger
         asChild
-        onPointerEnter={() => setOpen(true)}
-        onPointerLeave={() => setOpen(false)}
         onPointerDown={() => setOpen(false)}
         onClick={() => setOpen(false)}
       >
@@ -106,6 +108,11 @@ function ModeSelect({
 }) {
   const [expanded, setExpanded] = React.useState(false)
   const rootRef = React.useRef<HTMLDivElement>(null)
+  const valueRef = React.useRef(value)
+
+  React.useEffect(() => {
+    valueRef.current = value
+  }, [value])
 
   React.useEffect(() => {
     if (!expanded) return
@@ -120,49 +127,49 @@ function ModeSelect({
     return () => document.removeEventListener("pointerdown", onPointerDown)
   }, [expanded])
 
-  const toggle = (
-    <InputGroupButton
-      type="button"
-      size="icon-sm"
-      variant="ghost"
-      disabled={disabled}
-      data-composer-action="mode"
-      aria-label={expanded ? "Collapse modes" : "Expand modes"}
-      aria-expanded={expanded}
-      className="size-8 shrink-0 rounded-full p-0 text-muted-foreground shadow-none"
-      onClick={() => setExpanded((current) => !current)}
-    >
-      <ChevronDownIcon
-        className={cn(
-          "size-3.5 transition-transform duration-200 ease-out",
-          expanded && "rotate-180",
-        )}
-      />
-    </InputGroupButton>
-  )
+  React.useEffect(() => {
+    const host = rootRef.current?.closest("[data-composer-root]")
+    if (!host) return
+
+    function onModeShortcut() {
+      if (disabled) return
+      setExpanded(true)
+      onValueChange(nextModeValue(valueRef.current))
+    }
+
+    host.addEventListener(COMPOSER_MODE_SHORTCUT_EVENT, onModeShortcut)
+    return () => {
+      host.removeEventListener(COMPOSER_MODE_SHORTCUT_EVENT, onModeShortcut)
+    }
+  }, [disabled, onValueChange])
 
   return (
     <div
       ref={rootRef}
       role="group"
       aria-label="Composer mode"
+      aria-expanded={expanded}
       className="inline-flex min-w-0 items-center gap-1"
     >
       {MODES.map((entry) => {
         const selected = entry.value === value
         const visible = expanded || selected
-
-        return (
+        const chip = (
           <button
-            key={entry.value}
             type="button"
             disabled={disabled}
             aria-pressed={selected}
+            aria-label={selected ? `Mode: ${entry.label}` : entry.label}
+            data-composer-action={selected ? "mode" : undefined}
             tabIndex={visible ? 0 : -1}
             aria-hidden={!visible}
             onClick={() => {
               if (!expanded) {
                 setExpanded(true)
+                return
+              }
+              if (selected) {
+                setExpanded(false)
                 return
               }
               onValueChange(entry.value)
@@ -181,10 +188,20 @@ function ModeSelect({
             {entry.label}
           </button>
         )
+
+        if (selected) {
+          return (
+            <ModeChipTooltip
+              key={entry.value}
+              enabled={shortcutTooltips && !expanded}
+            >
+              {chip}
+            </ModeChipTooltip>
+          )
+        }
+
+        return <React.Fragment key={entry.value}>{chip}</React.Fragment>
       })}
-      <ModeToggleTooltip enabled={shortcutTooltips && !expanded}>
-        {toggle}
-      </ModeToggleTooltip>
     </div>
   )
 }
