@@ -532,7 +532,7 @@ export function Composer({
           />
           <InputGroupAddon
             align="block-end"
-            className="min-w-0 justify-between gap-2 px-1.5 pb-1.5 pt-0"
+            className="min-w-0 justify-between gap-2 px-1.5 pb-1.5 pt-0 group-has-[>input]/input-group:pb-1.5"
           >
             <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
               <div className="shrink-0">
