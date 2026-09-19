@@ -27,28 +27,28 @@ const MODES = [
     value: "ask",
     label: "Ask",
     selected:
-      "bg-sky-500/30 text-sky-900 ring-1 ring-sky-500/35 dark:bg-sky-500/35 dark:text-sky-100",
+      "bg-sky-500/30 text-sky-900 ring-1 ring-inset ring-sky-500/35 dark:bg-sky-500/35 dark:text-sky-100",
     idle: "bg-sky-500/10 text-sky-800/80 hover:bg-sky-500/20 dark:text-sky-200/80 dark:hover:bg-sky-500/25",
   },
   {
     value: "plan",
     label: "Plan",
     selected:
-      "bg-violet-500/30 text-violet-950 ring-1 ring-violet-500/35 dark:bg-violet-500/35 dark:text-violet-100",
+      "bg-violet-500/30 text-violet-950 ring-1 ring-inset ring-violet-500/35 dark:bg-violet-500/35 dark:text-violet-100",
     idle: "bg-violet-500/10 text-violet-800/80 hover:bg-violet-500/20 dark:text-violet-200/80 dark:hover:bg-violet-500/25",
   },
   {
     value: "debug",
     label: "Debug",
     selected:
-      "bg-amber-500/35 text-amber-950 ring-1 ring-amber-500/40 dark:bg-amber-500/40 dark:text-amber-50",
+      "bg-amber-500/35 text-amber-950 ring-1 ring-inset ring-amber-500/40 dark:bg-amber-500/40 dark:text-amber-50",
     idle: "bg-amber-500/10 text-amber-900/80 hover:bg-amber-500/20 dark:text-amber-200/80 dark:hover:bg-amber-500/25",
   },
   {
     value: "auto",
     label: "Auto",
     selected:
-      "bg-emerald-500/30 text-emerald-950 ring-1 ring-emerald-500/35 dark:bg-emerald-500/35 dark:text-emerald-100",
+      "bg-emerald-500/30 text-emerald-950 ring-1 ring-inset ring-emerald-500/35 dark:bg-emerald-500/35 dark:text-emerald-100",
     idle: "bg-emerald-500/10 text-emerald-900/80 hover:bg-emerald-500/20 dark:text-emerald-200/80 dark:hover:bg-emerald-500/25",
   },
 ] as const
@@ -184,7 +184,10 @@ function ModeSelect({
       aria-label="Composer mode"
       aria-expanded={expanded}
       className={cn(
-        "inline-flex min-w-0 max-w-full items-center gap-1",
+        "inline-flex min-w-0 max-w-full items-center",
+        // Collapsed: no gap — hidden max-w-0 chips must not invent Attach↔Mode space.
+        // Expanded: chip-to-chip gap only (toolbar Attach↔Mode stays composer gap-1.5).
+        expanded ? "gap-1" : "gap-0",
         expanded &&
           "overflow-x-auto overscroll-x-contain touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
       )}
@@ -214,9 +217,11 @@ function ModeSelect({
               onValueChange(entry.value)
             }}
             className={cn(
+              // Capsule radius = half height (size-8); ring-inset keeps the curve
+              // continuous when toolbar parents use overflow-hidden.
               "inline-flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-medium whitespace-nowrap outline-none",
               "transition-[max-width,opacity,padding,margin,background-color,box-shadow,color] duration-200 ease-out",
-              "focus-visible:ring-2 focus-visible:ring-ring/50",
+              "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50",
               "disabled:pointer-events-none disabled:opacity-50",
               visible
                 ? "max-w-24 px-2.5 opacity-100"
