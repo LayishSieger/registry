@@ -196,9 +196,18 @@ function ShortcutTooltip({
   if (!enabled) return children
 
   return (
-    <Tooltip open={open} onOpenChange={setOpen}>
+    <Tooltip
+      open={open}
+      onOpenChange={(next) => {
+        // Close from Radix; opens are hover-only so click/focus cannot stick
+        // the tip over a menu or after activation.
+        if (!next) setOpen(false)
+      }}
+    >
       <TooltipTrigger
         asChild
+        onPointerEnter={() => setOpen(true)}
+        onPointerLeave={() => setOpen(false)}
         onPointerDown={() => setOpen(false)}
         onClick={() => setOpen(false)}
         onKeyDown={(event) => {
@@ -324,9 +333,12 @@ export function Composer({
     }
     const root = rootRef.current
     if (!root) return
-    const target = root.querySelector<HTMLElement>(
-      `[data-composer-action="${action}"]`,
-    )
+    // Prefer the real control — wrapper spans from tooltips also carry the attr.
+    const target =
+      root.querySelector<HTMLElement>(
+        `button[data-composer-action="${action}"]`,
+      ) ??
+      root.querySelector<HTMLElement>(`[data-composer-action="${action}"]`)
     if (!target) return
     if (target instanceof HTMLButtonElement) {
       target.click()

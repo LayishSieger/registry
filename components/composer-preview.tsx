@@ -5,14 +5,12 @@ import { ChevronDownIcon } from "lucide-react"
 
 import { SpeechInput } from "@/components/ai-elements/speech-input"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { InputGroupButton } from "@/components/ui/input-group"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import type {
   ComposerStatus,
@@ -24,26 +22,38 @@ const MODES = [
   {
     value: "ask",
     label: "Ask",
-    className:
+    trigger:
       "bg-sky-500/15 text-sky-800 hover:bg-sky-500/20 dark:text-sky-200",
+    selected:
+      "bg-sky-500/30 text-sky-900 ring-1 ring-sky-500/35 dark:bg-sky-500/35 dark:text-sky-100",
+    idle: "bg-sky-500/10 text-sky-800/80 hover:bg-sky-500/20 dark:text-sky-200/80 dark:hover:bg-sky-500/25",
   },
   {
     value: "plan",
     label: "Plan",
-    className:
+    trigger:
       "bg-violet-500/15 text-violet-800 hover:bg-violet-500/20 dark:text-violet-200",
+    selected:
+      "bg-violet-500/30 text-violet-950 ring-1 ring-violet-500/35 dark:bg-violet-500/35 dark:text-violet-100",
+    idle: "bg-violet-500/10 text-violet-800/80 hover:bg-violet-500/20 dark:text-violet-200/80 dark:hover:bg-violet-500/25",
   },
   {
     value: "debug",
     label: "Debug",
-    className:
+    trigger:
       "bg-amber-500/15 text-amber-900 hover:bg-amber-500/20 dark:text-amber-200",
+    selected:
+      "bg-amber-500/35 text-amber-950 ring-1 ring-amber-500/40 dark:bg-amber-500/40 dark:text-amber-50",
+    idle: "bg-amber-500/10 text-amber-900/80 hover:bg-amber-500/20 dark:text-amber-200/80 dark:hover:bg-amber-500/25",
   },
   {
     value: "auto",
     label: "Auto",
-    className:
+    trigger:
       "bg-emerald-500/15 text-emerald-900 hover:bg-emerald-500/20 dark:text-emerald-200",
+    selected:
+      "bg-emerald-500/30 text-emerald-950 ring-1 ring-emerald-500/35 dark:bg-emerald-500/35 dark:text-emerald-100",
+    idle: "bg-emerald-500/10 text-emerald-900/80 hover:bg-emerald-500/20 dark:text-emerald-200/80 dark:hover:bg-emerald-500/25",
   },
 ] as const
 
@@ -56,45 +66,67 @@ function ModeSelect({
   onValueChange: (value: string) => void
   disabled?: boolean
 }) {
+  const [open, setOpen] = React.useState(false)
   const mode = MODES.find((entry) => entry.value === value) ?? MODES[3]
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <InputGroupButton
           type="button"
           size="sm"
           variant="ghost"
           disabled={disabled}
           data-composer-action="mode"
+          aria-label={`Mode: ${mode.label}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
           className={cn(
             "h-8 gap-1 rounded-full border-0 px-2.5 text-xs font-medium shadow-none",
-            mode.className,
+            mode.trigger,
           )}
         >
           {mode.label}
           <ChevronDownIcon className="size-3.5 opacity-70" />
         </InputGroupButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-36">
-        <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-          {MODES.map((entry) => (
-            <DropdownMenuRadioItem key={entry.value} value={entry.value}>
-              <span
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        className="w-auto min-w-0 rounded-2xl p-1.5 shadow-md"
+      >
+        <div
+          role="listbox"
+          aria-label="Composer mode"
+          className="flex flex-wrap gap-1.5"
+        >
+          {MODES.map((entry) => {
+            const selected = entry.value === value
+            return (
+              <button
+                key={entry.value}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                disabled={disabled}
                 className={cn(
-                  "mr-2 inline-flex size-2.5 rounded-full",
-                  entry.value === "ask" && "bg-sky-500",
-                  entry.value === "plan" && "bg-violet-500",
-                  entry.value === "debug" && "bg-amber-500",
-                  entry.value === "auto" && "bg-emerald-500",
+                  "inline-flex h-8 items-center rounded-full px-2.5 text-xs font-medium transition-colors outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-ring/50",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                  selected ? entry.selected : entry.idle,
                 )}
-              />
-              {entry.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                onClick={() => {
+                  onValueChange(entry.value)
+                  setOpen(false)
+                }}
+              >
+                {entry.label}
+              </button>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -260,6 +292,7 @@ export function ComposerSpeechInputPreview() {
             variant="ghost"
             disabled={disabled}
             aria-label="Voice input"
+            data-composer-action="dictation"
             onTranscriptionChange={(transcript) => {
               demo.setText(appendTranscript(textRef.current, transcript))
             }}
