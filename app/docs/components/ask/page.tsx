@@ -11,8 +11,11 @@ import {
   AskCancelPreview,
   AskDefaultPreview,
   AskHitlPreview,
+  AskPlainPreview,
   AskReviewPreview,
 } from "@/components/ask-preview"
+import { AskKeyboardDocs } from "@/components/ask-keyboard-docs"
+import { AskFocusScope } from "@/components/ask-focus-scope"
 import { RegistryExample } from "@/components/registry-example"
 import { askToc } from "@/lib/docs"
 import {
@@ -50,6 +53,7 @@ function Heading({
 export default function AskPage() {
   return (
     <div className="flex items-start">
+      <AskFocusScope>
       <div className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col gap-10 py-8 lg:py-10">
         <DocsPageHeader
           title={askTitle}
@@ -82,9 +86,10 @@ export default function AskPage() {
           .
         </p>
         <RegistryExample
+          interactiveFocus
           name="ask"
           title="Default"
-          description="Next and Submit. Other is a row — Enter commits, it is not an answer while typing."
+          description="Click the preview chrome or the card to focus. Hold ⌘/Ctrl for inline Kbd. Submit shows a toast."
         >
           <AskDefaultPreview />
         </RegistryExample>
@@ -93,6 +98,19 @@ export default function AskPage() {
           <CopyCommand command={installCommand} />
           <p className="text-sm text-muted-foreground">
             The CLI copies the block into your project. You own the source.
+            Mount a root{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              {"<Toaster />"}
+            </code>{" "}
+            from{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              @/components/ui/sonner
+            </code>{" "}
+            if you enable{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              toastOnSubmit
+            </code>
+            .
           </p>
         </section>
         <section className="flex flex-col gap-3">
@@ -118,12 +136,29 @@ export default function AskPage() {
           </p>
         </section>
         <section className="flex flex-col gap-3">
+          <Heading id="variants">Variants</Heading>
+          <p className="text-sm text-muted-foreground">
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              variant=&quot;plain&quot;
+            </code>{" "}
+            drops the card background and uses bordered answer rows (Questionnaire
+            look). Choice{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              description
+            </code>{" "}
+            adds optional subtext under each label.
+          </p>
+          <RegistryExample interactiveFocus>
+            <AskPlainPreview />
+          </RegistryExample>
+        </section>
+        <section className="flex flex-col gap-3">
           <Heading id="auto-advance">Auto-advance</Heading>
           <p className="text-sm text-muted-foreground">
             First pick auto-advances. Other Enter commits and advances. After
             Back, Next comes back.
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskAutoAdvancePreview />
           </RegistryExample>
         </section>
@@ -134,7 +169,7 @@ export default function AskPage() {
             the batch. Last-slide auto-advance and Other commit go to review,
             not submit.
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskReviewPreview />
           </RegistryExample>
         </section>
@@ -144,9 +179,13 @@ export default function AskPage() {
             Set <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">cancel</code> on
             the batch. Confirm before discarding answers.
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskCancelPreview />
           </RegistryExample>
+        </section>
+        <section className="flex flex-col gap-3">
+          <Heading id="keyboard">Keyboard</Heading>
+          <AskKeyboardDocs />
         </section>
         <section className="flex flex-col gap-3">
           <Heading id="ai-sdk-hitl">AI SDK HITL</Heading>
@@ -160,7 +199,7 @@ export default function AskPage() {
             </code>
             .
           </p>
-          <RegistryExample>
+          <RegistryExample interactiveFocus>
             <AskHitlPreview />
           </RegistryExample>
         </section>
@@ -188,6 +227,16 @@ export default function AskPage() {
                   <td className="py-2">—</td>
                 </tr>
                 <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">variant</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">&quot;card&quot; | &quot;plain&quot;</td>
+                  <td className="py-2 font-mono text-[0.8rem]">&quot;card&quot;</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">toastOnSubmit</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">false</td>
+                </tr>
+                <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">review</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
                   <td className="py-2 font-mono text-[0.8rem]">false</td>
@@ -201,6 +250,26 @@ export default function AskPage() {
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">shortcuts</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">&quot;numbers&quot; | &quot;letters&quot; | false</td>
                   <td className="py-2 font-mono text-[0.8rem]">&quot;numbers&quot;</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">shortcutHints</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">true</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">focusable</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
+                  <td className="py-2 font-mono text-[0.8rem]">false</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">focusPriority</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">number</td>
+                  <td className="py-2 font-mono text-[0.8rem]">0</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">focusTriggers</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">ref[] | element[]</td>
+                  <td className="py-2">—</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">autoAdvanceDelay</td>
@@ -217,6 +286,7 @@ export default function AskPage() {
           </div>
         </section>
       </div>
+      </AskFocusScope>
       <div className="sticky top-(--header-height) hidden h-[calc(100svh-var(--header-height))] w-52 shrink-0 overflow-y-auto py-10 pl-8 xl:block">
         <DocsTableOfContents toc={askToc} />
       </div>
