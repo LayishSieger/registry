@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import { absoluteUrl } from "@/lib/site"
 
 export function DocsCopyPage({
   markdown,
@@ -28,18 +29,16 @@ export function DocsCopyPage({
   const { copyToClipboard, isCopied } = useCopyToClipboard()
 
   function pageUrl() {
-    if (typeof window === "undefined") return path
-    return `${window.location.origin}${path}`
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}${path}`
+    }
+    return absoluteUrl(path)
   }
 
   function agentPrompt() {
     return `I'm looking at this documentation: ${pageUrl()}
 
-Help me understand how to use it. Be ready to explain concepts, give examples, or help debug based on it.
-
----
-
-${markdown}`
+Help me understand how to use it. Be ready to explain concepts, give examples, or help debug based on it.`
   }
 
   function copyPrompt() {
@@ -50,12 +49,12 @@ ${markdown}`
     <div className="relative flex w-fit items-stretch rounded-lg bg-secondary">
       <Button
         variant="secondary"
-        size="sm"
-        className="h-8 shadow-none md:h-7 md:text-[0.8rem]"
+        size="icon-sm"
+        className="size-8 px-2 shadow-none md:size-7"
         onClick={() => copyToClipboard(markdown)}
+        aria-label={isCopied ? "Copied page" : "Copy page"}
       >
-        {isCopied ? <CheckIcon data-icon="inline-start" /> : <CopyIcon data-icon="inline-start" />}
-        Copy Page
+        {isCopied ? <CheckIcon /> : <CopyIcon />}
       </Button>
       <Separator
         orientation="vertical"
@@ -66,10 +65,10 @@ ${markdown}`
           <Button
             variant="secondary"
             size="icon-sm"
-            className="size-8 shadow-none md:size-7"
+            className="group size-8 px-2 shadow-none md:size-7"
             aria-label="Copy page options"
           >
-            <ChevronDownIcon />
+            <ChevronDownIcon className="transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-48">
