@@ -6,9 +6,12 @@ import {
   type QuestionnaireItemStatus,
 } from "@shadcn/react/questionnaire"
 import {
+  ArrowDownIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
+  ArrowUpIcon,
   CheckIcon,
+  CornerDownLeftIcon,
   XIcon,
 } from "lucide-react"
 
@@ -22,6 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import {
   Questionnaire,
   QuestionnaireActions,
@@ -44,12 +48,31 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import {
+  useInteractiveFocusRegistration,
+  isOwnedPortaledOverlay,
+  rootHasOpenPortaledOverlay,
+  type InteractiveFocusTrigger,
+} from "@/registry/new-york/blocks/ask/interactive-focus"
+
+export {
+  InteractiveFocusProvider,
+  InteractiveFocusSurface,
+  useInteractiveFocusSurface,
+} from "@/registry/new-york/blocks/ask/interactive-focus"
+export type { InteractiveFocusTrigger } from "@/registry/new-york/blocks/ask/interactive-focus"
 
 const DEFAULT_AUTO_ADVANCE_DELAY_MS = 380
 
-const BATCH_ROW_CLASS =
-  "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70"
+const CARD_ROW_CLASS =
+  "group/questionnaire-choice relative flex min-h-11 items-center justify-between gap-3 rounded-md border border-input px-2.5 py-2 text-start text-sm transition-[color,background-color] outline-none select-none hover:bg-accent/60 has-[>input:focus-visible]:ring-1 has-[>input:focus-visible]:ring-ring/70 sm:border-transparent sm:px-2 sm:py-1.5"
+
+const PLAIN_ROW_CLASS =
+  "group/questionnaire-choice relative flex min-h-11 items-start justify-between gap-3 rounded-lg border border-input bg-transparent px-3 py-2.5 text-start text-sm transition-colors outline-none select-none hover:bg-muted/50 has-[>input:focus-visible]:border-foreground/40 data-checked:border-primary/40 data-checked:bg-muted"
+
+const TOUCH_ACTION_CLASS = "min-h-11 sm:min-h-0"
 
 const BATCH_BADGE_CLASS =
   "inline-flex size-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-medium"
@@ -78,7 +101,11 @@ function resolveOtherTrailingAction(args: {
 export type AskChoice = {
   value: string
   label: string
+  /** Optional subtext under the answer label. */
+  description?: string
 }
+
+export type AskVariant = "card" | "plain"
 
 type AskItemBase = {
   name: string
@@ -141,12 +168,58 @@ export type AskProps = {
   cancel?: boolean
   onCancel?: () => void
   autoAdvanceDelay?: number
+  /**
+   * Visual shell. `card` keeps the Card chrome (default).
+   * `plain` drops the card background and uses bordered answer rows
+   * (shadcn Questionnaire look).
+   */
+  variant?: AskVariant
+  /**
+   * Show a success toast when the batch is submitted.
+   * Requires a root `<Toaster />` from `@/components/ui/sonner`.
+   * Default false.
+   */
+  toastOnSubmit?: boolean
+  /** Answer shortcut keys on choices. Default `"numbers"`. */
   shortcuts?: "numbers" | "letters" | false
+  /**
+   * While Command (Meta) or Ctrl is held, show Kbd hints inline on
+   * Previous / Skip / Next / Submit. Default true. Only applies when
+   * `shortcuts` is not `false`.
+   */
+  shortcutHints?: boolean
+  /**
+   * Gate keyboard shortcuts behind interactive focus. Clicking the Ask
+   * card (or any `focusTriggers` / shared focus surface) activates it.
+   * With `InteractiveFocusProvider`, Tab cycles cards by `focusPriority`.
+   * Default false.
+   */
+  focusable?: boolean
+  /**
+   * When multiple focusable cards share a trigger (e.g. chat background),
+   * higher priority wins. Default 0.
+   */
+  focusPriority?: number
+  /**
+   * Extra elements that activate this Ask when clicked (chat pane, preview
+   * chrome, etc.). Shared surfaces from `InteractiveFocusSurface` are
+   * included automatically.
+   */
+  focusTriggers?: InteractiveFocusTrigger[]
+  /** Fires when interactive focus becomes active or inactive. */
+  onFocusChange?: (focused: boolean) => void
   labels?: AskLabels
   defaultItem?: string
   item?: string
   onItemChange?: (item: string) => void
 }
+
+export const ASK_SHORTCUTS = {
+  previous: "ArrowLeft",
+  next: "ArrowRight",
+  skip: "ArrowRight",
+  submit: "Enter",
+} as const
 
 function itemAutoAdvances(item: AskItem) {
   if (item.multiple) return false
@@ -237,11 +310,15 @@ function activeChoiceInputs(form: HTMLFormElement | null) {
   ]
   const active = items.find((item) => !item.hidden)
   if (!active) return []
-  return [
+  const choices = [
     ...active.querySelectorAll<HTMLInputElement>(
       "[data-slot=questionnaire-choice-input]",
     ),
   ].filter((input) => !input.disabled)
+  const other = active.querySelector<HTMLInputElement>(
+    "[data-slot=questionnaire-other-row] input:not([disabled])",
+  )
+  return other ? [...choices, other] : choices
 }
 
 function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
@@ -259,23 +336,84 @@ function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
   inputs[nextIndex]?.focus()
 }
 
+function useModifierHeld(enabled = true) {
+  const [held, setHeld] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!enabled) {
+      setHeld(false)
+      return
+    }
+    const sync = (event: KeyboardEvent) => {
+      setHeld(event.metaKey || event.ctrlKey)
+    }
+    const onBlur = () => setHeld(false)
+
+    window.addEventListener("keydown", sync)
+    window.addEventListener("keyup", sync)
+    window.addEventListener("blur", onBlur)
+    return () => {
+      window.removeEventListener("keydown", sync)
+      window.removeEventListener("keyup", sync)
+      window.removeEventListener("blur", onBlur)
+    }
+  }, [enabled])
+
+  return enabled ? held : false
+}
+
+function AskProgress({ className }: { className?: string }) {
+  return (
+    <QuestionnaireProgress
+      className={cn(
+        "min-w-0 whitespace-nowrap text-sm font-normal tabular-nums",
+        className,
+      )}
+      render={(props, state) => (
+        <div
+          {...props}
+          aria-label={`Question ${state.current} of ${state.total}`}
+        >
+          <span className="sm:hidden">
+            {state.current}/{state.total}
+          </span>
+          <span className="hidden sm:inline">
+            Question {state.current} of {state.total}
+          </span>
+        </div>
+      )}
+    />
+  )
+}
+
 function AskOptionRow({
   children,
+  description,
   className,
   isPending = false,
   showHoverArrow = false,
+  variant = "card",
   ...props
 }: React.ComponentProps<typeof QuestionnairePrimitive.Choice> & {
+  description?: string
   isPending?: boolean
   showHoverArrow?: boolean
+  variant?: AskVariant
 }) {
+  const plain = variant === "plain"
+  const hasDescription = Boolean(description)
+
   return (
     <QuestionnairePrimitive.Choice
       data-slot="questionnaire-choice"
       className={cn(
-        BATCH_ROW_CLASS,
-        "cursor-pointer data-checked:bg-accent data-checked:text-accent-foreground",
+        plain ? PLAIN_ROW_CLASS : CARD_ROW_CLASS,
+        !plain &&
+          "cursor-default data-checked:bg-accent data-checked:text-accent-foreground sm:cursor-pointer",
+        plain &&
+          "cursor-default data-checked:text-accent-foreground sm:cursor-pointer",
         "data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50",
+        hasDescription && !plain && "items-start",
         isPending && "ring-1 ring-primary/50",
         className,
       )}
@@ -283,13 +421,24 @@ function AskOptionRow({
     >
       <QuestionnairePrimitive.ChoiceInput
         data-slot="questionnaire-choice-input"
-        className="absolute inset-0 size-full cursor-pointer opacity-0"
+        className="absolute inset-0 size-full cursor-default opacity-0 sm:cursor-pointer"
       />
       <QuestionnairePrimitive.ChoiceLabel
         data-slot="questionnaire-choice-label"
-        className="min-w-0 flex-1 leading-snug"
+        className={cn(
+          "min-w-0 flex-1 leading-snug",
+          hasDescription && "flex flex-col gap-0.5",
+        )}
       >
-        {children}
+        <span className={cn(hasDescription && "font-medium")}>{children}</span>
+        {description ? (
+          <span
+            data-slot="questionnaire-choice-description"
+            className="text-sm font-normal text-muted-foreground"
+          >
+            {description}
+          </span>
+        ) : null}
       </QuestionnairePrimitive.ChoiceLabel>
       <span className="relative size-6 shrink-0">
         <QuestionnairePrimitive.ChoiceShortcut
@@ -297,13 +446,17 @@ function AskOptionRow({
           className={cn(
             BATCH_BADGE_CLASS,
             "pointer-events-none border-transparent text-muted-foreground group-data-checked/questionnaire-choice:border-primary group-data-checked/questionnaire-choice:bg-primary group-data-checked/questionnaire-choice:text-primary-foreground",
+            hasDescription && "translate-y-0.5",
             showHoverArrow && "group-hover/questionnaire-choice:hidden",
           )}
         />
         {showHoverArrow ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-0 hidden items-center justify-center rounded-md bg-primary text-primary-foreground group-hover/questionnaire-choice:inline-flex"
+            className={cn(
+              "pointer-events-none absolute inset-0 hidden items-center justify-center rounded-md bg-primary text-primary-foreground group-hover/questionnaire-choice:inline-flex",
+              hasDescription && "translate-y-0.5",
+            )}
           >
             <ArrowRightIcon className="size-3" />
           </span>
@@ -324,6 +477,7 @@ function AskOtherRow({
   text,
   autoAdvance,
   multiple = false,
+  variant = "card",
   inputRef,
   onTextChange,
   onCommit,
@@ -341,6 +495,7 @@ function AskOtherRow({
   text: string
   autoAdvance: boolean
   multiple?: boolean
+  variant?: AskVariant
   inputRef: (node: HTMLInputElement | null) => void
   onTextChange: (value: string) => void
   onCommit: () => void
@@ -350,6 +505,7 @@ function AskOtherRow({
 }) {
   const localRef = React.useRef<HTMLInputElement | null>(null)
   const [focused, setFocused] = React.useState(false)
+  const plain = variant === "plain"
 
   function setInputNode(node: HTMLInputElement | null) {
     localRef.current = node
@@ -407,8 +563,11 @@ function AskOtherRow({
     <div
       data-slot="questionnaire-other-row"
       className={cn(
-        BATCH_ROW_CLASS,
-        highlighted && "bg-accent text-accent-foreground",
+        plain ? PLAIN_ROW_CLASS : CARD_ROW_CLASS,
+        plain
+          ? (committed || isPending) &&
+              "border-primary/40 bg-muted text-accent-foreground"
+          : highlighted && "bg-accent text-accent-foreground",
         isPending && "ring-1 ring-primary/50",
         disabled && "cursor-not-allowed opacity-50",
       )}
@@ -665,12 +824,88 @@ function useAutoAdvance(delay: number) {
   return { pendingKey, schedule, clear }
 }
 
+function ShortcutKey({ part }: { part: string }) {
+  if (part === "ArrowLeft") {
+    return (
+      <Kbd>
+        <ArrowLeftIcon aria-label="Left arrow" />
+      </Kbd>
+    )
+  }
+  if (part === "ArrowRight") {
+    return (
+      <Kbd>
+        <ArrowRightIcon aria-label="Right arrow" />
+      </Kbd>
+    )
+  }
+  if (part === "ArrowUp") {
+    return (
+      <Kbd>
+        <ArrowUpIcon aria-label="Up arrow" />
+      </Kbd>
+    )
+  }
+  if (part === "ArrowDown") {
+    return (
+      <Kbd>
+        <ArrowDownIcon aria-label="Down arrow" />
+      </Kbd>
+    )
+  }
+  if (part === "Enter") {
+    return (
+      <Kbd>
+        <CornerDownLeftIcon aria-label="Enter" />
+      </Kbd>
+    )
+  }
+  return <Kbd>{part}</Kbd>
+}
+
+export function AskShortcutKbd({
+  shortcut,
+  className,
+}: {
+  shortcut: string
+  className?: string
+}) {
+  const parts = shortcut.split("+")
+
+  return (
+    <KbdGroup className={cn("align-middle", className)}>
+      {parts.map((part, index) => (
+        <ShortcutKey key={`${shortcut}-${index}-${part}`} part={part} />
+      ))}
+    </KbdGroup>
+  )
+}
+
+function ActionShortcutHint({
+  shortcut,
+  visible,
+}: {
+  shortcut: string
+  visible: boolean
+}) {
+  if (!visible) return null
+
+  return (
+    <AskShortcutKbd
+      shortcut={shortcut}
+      className="shrink-0 **:data-[slot=kbd]:bg-current/15 **:data-[slot=kbd]:text-current"
+    />
+  )
+}
+
 function CancelBatchButton({
   labels,
   onCancel,
+  className,
 }: {
   labels?: AskLabels
   onCancel?: () => void
+  className?: string
 }) {
   const [open, setOpen] = React.useState(false)
 
@@ -681,6 +916,7 @@ function CancelBatchButton({
           type="button"
           variant="ghost"
           size="icon"
+          className={cn("size-11 sm:size-9", className)}
           aria-label={labels?.cancel ?? "Cancel batch"}
         >
           <XIcon />
@@ -730,15 +966,34 @@ export function Ask({
   cancel = false,
   onCancel,
   autoAdvanceDelay = DEFAULT_AUTO_ADVANCE_DELAY_MS,
+  variant = "card",
+  toastOnSubmit = false,
   shortcuts = "numbers",
+  shortcutHints = true,
+  focusable = false,
+  focusPriority = 0,
+  focusTriggers,
+  onFocusChange,
   labels,
   defaultItem,
   item: itemProp,
   onItemChange,
 }: AskProps) {
+  const plain = variant === "plain"
   const firstName = items[0]?.name ?? ""
   const lastName = items.at(-1)?.name
   const formRef = React.useRef<HTMLFormElement>(null)
+  const { focused: interactiveFocused } = useInteractiveFocusRegistration({
+    enabled: focusable,
+    priority: focusPriority,
+    rootRef: formRef as React.RefObject<HTMLElement | null>,
+    triggers: focusTriggers,
+    onFocusChange,
+  })
+  const keyboardArmed = !focusable || interactiveFocused
+  const modifierHeld = useModifierHeld(keyboardArmed)
+  const showShortcutHints =
+    shortcuts !== false && shortcutHints && modifierHeld && keyboardArmed
   const [phase, setPhase] = React.useState<"questions" | "review">("questions")
   const [reviewAnswers, setReviewAnswers] = React.useState<
     AskAnswer[]
@@ -835,13 +1090,31 @@ export function Ask({
     clickSlot(formRef.current, "submit")
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
-    if (event.defaultPrevented || event.nativeEvent.isComposing) return
+  function handleAskKeyDown(
+    event: KeyboardEvent | React.KeyboardEvent<HTMLFormElement>,
+  ) {
+    if (!keyboardArmed) return
+    if (event.defaultPrevented) return
+    const composing =
+      "nativeEvent" in event
+        ? event.nativeEvent.isComposing
+        : event.isComposing
+    if (composing) return
     if (event.metaKey || event.ctrlKey || event.altKey) return
-    if (isEditableTarget(event.target)) return
 
-    const key = event.key
     const form = formRef.current
+    if (rootHasOpenPortaledOverlay(form)) return
+
+    const target = event.target
+    const key = event.key
+    // ↑/↓ still cycle choices (including Other) while the Other text field is focused.
+    const isVerticalChoiceNav = key === "ArrowUp" || key === "ArrowDown"
+    if (form && target instanceof Node && !form.contains(target)) {
+      if (isEditableTarget(target)) return
+      if (isOwnedPortaledOverlay(form, target)) return
+    } else if (isEditableTarget(target) && !isVerticalChoiceNav) {
+      return
+    }
 
     if (phase === "review") {
       if (key === "ArrowLeft") {
@@ -859,20 +1132,23 @@ export function Ask({
       return
     }
 
-    if (key === "ArrowUp" || key === "ArrowDown") {
+    if (isVerticalChoiceNav) {
       event.preventDefault()
+      event.stopPropagation()
       moveChoiceFocus(form, key === "ArrowDown" ? 1 : -1)
       return
     }
 
     if (key === "ArrowLeft") {
       event.preventDefault()
+      event.stopPropagation()
       clickSlot(form, "previous")
       return
     }
 
     if (key === "ArrowRight") {
       event.preventDefault()
+      event.stopPropagation()
       if (nextIsShowing) {
         if (showReviewNext) {
           if (hasAnswer) enterReview()
@@ -895,23 +1171,23 @@ export function Ask({
       return
     }
 
-    if (key === " " && isChoiceInput(event.target)) {
+    if (key === " " && isChoiceInput(target)) {
       event.preventDefault()
-      event.target.click()
+      target.click()
       return
     }
 
     if (key !== "Enter") return
 
-    if (isChoiceInput(event.target) && activeSlide) {
+    if (isChoiceInput(target) && activeSlide) {
       const focusedSelected = isChoiceSelected(
         activeSlide,
-        event.target.value,
+        target.value,
         selection,
       )
       if (!hasAnswer || !focusedSelected) {
         event.preventDefault()
-        event.target.click()
+        target.click()
         return
       }
       event.preventDefault()
@@ -924,6 +1200,27 @@ export function Ask({
       continueForward()
     }
   }
+
+  const handleAskKeyDownRef = React.useRef(handleAskKeyDown)
+  handleAskKeyDownRef.current = handleAskKeyDown
+
+  React.useEffect(() => {
+    if (!focusable || !keyboardArmed) return
+    // Capture-phase so ←/→ never hit native radio group navigation.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key !== "ArrowLeft" &&
+        event.key !== "ArrowRight" &&
+        event.key !== "ArrowUp" &&
+        event.key !== "ArrowDown"
+      ) {
+        return
+      }
+      handleAskKeyDownRef.current(event)
+    }
+    window.addEventListener("keydown", onKeyDown, true)
+    return () => window.removeEventListener("keydown", onKeyDown, true)
+  }, [focusable, keyboardArmed])
 
   function goToNextFrom(fromName: string) {
     if (activeItemRef.current !== fromName) return
@@ -950,15 +1247,22 @@ export function Ask({
       return
     }
     event.preventDefault()
-    onResult?.({
-      status: "submitted",
-      answers: readAnswers(
-        event.currentTarget,
-        items,
-        selectionRef.current,
-        otherDraftsRef.current,
-      ),
-    })
+    const answers = readAnswers(
+      event.currentTarget,
+      items,
+      selectionRef.current,
+      otherDraftsRef.current,
+    )
+    const result: AskResult = { status: "submitted", answers }
+    if (toastOnSubmit) {
+      const summary = answers
+        .map((answer) => `${answer.title}: ${answer.label}`)
+        .join(" · ")
+      toast.success("Submitted", {
+        description: summary || "Batch submitted.",
+      })
+    }
+    onResult?.(result)
     onSubmit?.(event)
   }
 
@@ -1123,16 +1427,45 @@ export function Ask({
     <Questionnaire
       ref={formRef}
       tabIndex={-1}
+      data-ask-focused={interactiveFocused ? "true" : "false"}
       className={cn("w-full outline-none", className)}
       defaultItem={defaultItem}
       item={activeItem || undefined}
       items={collection}
       shortcuts={shortcuts === false ? undefined : shortcuts}
       onItemChange={handleItemChange}
-      onKeyDown={handleKeyDown}
+      onKeyDown={(event) => {
+        if (focusable && !keyboardArmed) {
+          // Form may still be focused briefly; don't let Questionnaire act.
+          event.preventDefault()
+          event.stopPropagation()
+          return
+        }
+        handleAskKeyDownRef.current(event)
+      }}
       onSubmit={handleSubmit}
     >
-      <Card>
+      <Card
+        className={cn(
+          !plain && "gap-2!",
+          plain &&
+            "gap-4 rounded-none bg-transparent py-0 ring-0 [--card-spacing:--spacing(0)] has-data-[slot=card-footer]:pb-0",
+          showCancel && phase === "questions" && "relative",
+          showCancel && phase === "questions" && !plain && "pt-2",
+          focusable && !plain && "bg-sidebar",
+          focusable && !plain && !interactiveFocused && "ring-0",
+        )}
+      >
+        {showCancel && phase === "questions" ? (
+          <CancelBatchButton
+            className={cn(
+              "absolute z-10",
+              plain ? "top-0 right-0" : "top-2 right-2",
+            )}
+            labels={labels}
+            onCancel={emitCancel}
+          />
+        ) : null}
         <div hidden={phase === "review"}>
           {items.map((item) => {
             const titleId = `ask-${item.name}-title`
@@ -1154,35 +1487,40 @@ export function Ask({
                   }))
                 }}
               >
-                <CardHeader>
-                  <QuestionnaireTitle id={titleId} render={<CardTitle />}>
+                <CardHeader
+                  className={cn(
+                    "gap-0.5",
+                    plain && "rounded-none px-0",
+                  )}
+                >
+                  {showCancel ? (
+                    <AskProgress className="pr-10" />
+                  ) : null}
+                  <QuestionnaireTitle
+                    id={titleId}
+                    className="mb-0"
+                    render={<CardTitle />}
+                  >
                     {item.title}
                   </QuestionnaireTitle>
+                  {showCancel ? null : (
+                    <CardAction className="row-span-1">
+                      <AskProgress />
+                    </CardAction>
+                  )}
                   {item.description ? (
-                    <QuestionnaireDescription render={<CardDescription />}>
+                    <QuestionnaireDescription
+                      className={cn(!showCancel && "col-span-full")}
+                      render={<CardDescription />}
+                    >
                       {item.description}
                     </QuestionnaireDescription>
                   ) : null}
-                  <CardAction>
-                    <div className="flex items-center gap-2">
-                      <QuestionnaireProgress
-                        render={(props, state) => (
-                          <div {...props}>
-                            Question {state.current} of {state.total}
-                          </div>
-                        )}
-                      />
-                      {showCancel ? (
-                        <CancelBatchButton
-                          labels={labels}
-                          onCancel={emitCancel}
-                        />
-                      ) : null}
-                    </div>
-                  </CardAction>
                 </CardHeader>
-                <CardContent>
-                  <QuestionnaireChoices className="gap-1">
+                <CardContent className={cn(plain && "px-0")}>
+                  <QuestionnaireChoices
+                    className={cn(plain ? "gap-2" : "gap-2 sm:gap-1")}
+                  >
                     {item.choices.map((choice) => {
                       const choiceKey = `${item.name}:${choice.value}`
                       const isPending = pendingKey === choiceKey
@@ -1200,10 +1538,12 @@ export function Ask({
                         <AskOptionRow
                           key={choice.value}
                           checked={isSelected}
+                          description={choice.description}
                           disabled={pendingKey != null && !isPending}
                           isPending={isPending}
                           showHoverArrow={showHoverArrow}
                           value={choice.value}
+                          variant={variant}
                           onClick={() => {
                             if (item.multiple || !isSelected) return
                             clear()
@@ -1273,6 +1613,7 @@ export function Ask({
                         text={otherDrafts[item.name]?.text ?? ""}
                         autoAdvance={canAutoAdvance}
                         multiple={item.multiple === true}
+                        variant={variant}
                         inputRef={(node) => {
                           otherInputRefs.current[item.name] = node
                         }}
@@ -1331,7 +1672,7 @@ export function Ask({
         </div>
         {phase === "review" ? (
           <>
-            <CardHeader>
+            <CardHeader className={cn(plain && "rounded-none px-0")}>
               <CardTitle>{labels?.review ?? "Review"}</CardTitle>
               <CardDescription>Submit this batch?</CardDescription>
               {showCancel ? (
@@ -1340,7 +1681,7 @@ export function Ask({
                 </CardAction>
               ) : null}
             </CardHeader>
-            <CardContent>
+            <CardContent className={cn(plain && "px-0")}>
               <ul className="flex flex-col gap-4">
                 {reviewAnswers.map((answer) => (
                   <li key={answer.name} className="flex flex-col gap-1">
@@ -1355,27 +1696,45 @@ export function Ask({
           </>
         ) : null}
         {showActions ? (
-          <CardFooter className="border-t-0 bg-transparent">
+          <CardFooter
+            className={cn(
+              "border-t-0 bg-transparent p-0 px-(--card-spacing) pt-1 pb-(--card-spacing)",
+              plain && "px-0 pb-0",
+            )}
+          >
           <QuestionnaireActions className="w-full">
             {phase === "review" ? (
               <>
                 <Button
                   type="button"
                   variant="outline"
-                  className="col-start-1 row-start-1 justify-self-start"
+                  className={cn(
+                    "col-start-1 row-start-1 justify-self-start",
+                    TOUCH_ACTION_CLASS,
+                  )}
                   onClick={leaveReview}
                 >
-                  <ArrowLeftIcon data-icon="inline-start" />
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.previous}
+                    visible={showShortcutHints}
+                  />
                   {backLabel}
                 </Button>
                 <QuestionnaireSubmit>
                   {labels?.submit ?? "Submit"}
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.submit}
+                    visible={showShortcutHints}
+                  />
                 </QuestionnaireSubmit>
               </>
             ) : (
               <>
                 <QuestionnairePrevious>
-                  <ArrowLeftIcon data-icon="inline-start" />
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.previous}
+                    visible={showShortcutHints}
+                  />
                   {backLabel}
                 </QuestionnairePrevious>
                 <QuestionnaireSkip
@@ -1392,20 +1751,41 @@ export function Ask({
                   }}
                 >
                   {skipLabel}
-                  {skipHasArrow ? (
-                    <ArrowRightIcon data-icon="inline-end" />
-                  ) : null}
+                  <ActionShortcutHint
+                    shortcut={ASK_SHORTCUTS.skip}
+                    visible={showShortcutHints && !hideSkip}
+                  />
                 </QuestionnaireSkip>
                 {showReviewNext ? (
-                  hideAutoAdvanceNext ? null : (
+                  hideAutoAdvanceNext ? null : !hasAnswer ? (
+                    <span className="col-start-3 row-start-1 inline-flex justify-self-end">
+                      <Button
+                        type="button"
+                        disabled
+                        className={TOUCH_ACTION_CLASS}
+                        onClick={enterReview}
+                      >
+                        {nextLabel}
+                        <ActionShortcutHint
+                          shortcut={ASK_SHORTCUTS.next}
+                          visible={showShortcutHints}
+                        />
+                      </Button>
+                    </span>
+                  ) : (
                     <Button
                       type="button"
-                      className="col-start-3 row-start-1 justify-self-end"
-                      disabled={!hasAnswer}
+                      className={cn(
+                        "col-start-3 row-start-1 justify-self-end",
+                        TOUCH_ACTION_CLASS,
+                      )}
                       onClick={enterReview}
                     >
                       {nextLabel}
-                      <ArrowRightIcon data-icon="inline-end" />
+                      <ActionShortcutHint
+                        shortcut={ASK_SHORTCUTS.next}
+                        visible={showShortcutHints}
+                      />
                     </Button>
                   )
                 ) : (
@@ -1413,11 +1793,18 @@ export function Ask({
                     {hideAutoAdvanceNext ? null : (
                       <QuestionnaireNext>
                         {nextLabel}
-                        <ArrowRightIcon data-icon="inline-end" />
+                        <ActionShortcutHint
+                          shortcut={ASK_SHORTCUTS.next}
+                          visible={showShortcutHints}
+                        />
                       </QuestionnaireNext>
                     )}
                     <QuestionnaireSubmit>
                       {labels?.submit ?? "Submit"}
+                      <ActionShortcutHint
+                        shortcut={ASK_SHORTCUTS.submit}
+                        visible={showShortcutHints}
+                      />
                     </QuestionnaireSubmit>
                   </>
                 )}

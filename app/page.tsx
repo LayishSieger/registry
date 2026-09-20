@@ -1,7 +1,7 @@
 import Link from "next/link"
 
+import { AskHomePreview } from "@/components/ask-home-preview"
 import { CopyCommand } from "@/components/copy-command"
-import { AskDefaultPreview } from "@/components/ask-preview"
 import { ComposerDefaultPreview } from "@/components/composer-preview"
 import { Button } from "@/components/ui/button"
 import { installCommand, siteConfig } from "@/lib/site"
@@ -62,9 +62,7 @@ export default function Home() {
             <Link href="/docs/components/ask">Docs</Link>
           </Button>
         </div>
-        <div className="flex min-h-[400px] items-center justify-center rounded-lg border bg-background p-6">
-          <AskDefaultPreview />
-        </div>
+        <AskHomePreview />
       </section>
     </div>
   )

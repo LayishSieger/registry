@@ -12,8 +12,16 @@ const items = [
     title: "Which direction?",
     required: true,
     choices: [
-      { value: "clarify", label: "Ask a clarifying question" },
-      { value: "draft", label: "Draft a first version" },
+      {
+        value: "clarify",
+        label: "Ask a clarifying question",
+        description: "Gather missing context before writing.",
+      },
+      {
+        value: "draft",
+        label: "Draft a first version",
+        description: "Produce a starting point to iterate on.",
+      },
     ],
   },
 ]
@@ -22,6 +30,7 @@ export function Example() {
   return (
     <Ask
       items={items}
+      toastOnSubmit
       onResult={(result) => {
         // HITL: addToolOutput({ output: result })
       }}
@@ -45,6 +54,8 @@ The CLI copies the block into your project. You own the source.
 
 This is a GitHub registry, so the CLI reads \`registry.json\` from [${siteConfig.links.github}](${siteConfig.links.github}).
 
+Mount a root \`<Toaster />\` from \`@/components/ui/sonner\` if you enable \`toastOnSubmit\`.
+
 ## Usage
 
 \`\`\`tsx
@@ -52,6 +63,14 @@ ${askUsage}
 \`\`\`
 
 \`onResult\` is the HITL payload. Submit returns \`{ status: "submitted", answers }\`. Cancel returns \`{ status: "canceled" }\`. Pass that object to \`addToolOutput({ output })\`.
+
+## Variants
+
+\`variant="card"\` (default) keeps the Card chrome. \`variant="plain"\` removes the card background and draws bordered answer rows — closer to the upstream Questionnaire look.
+
+## Answer subtext
+
+Set \`description\` on a choice for optional subtext under the label.
 
 ## Auto-advance
 
@@ -64,6 +83,18 @@ Set \`review\` on the batch. Last-slide auto-advance and Other commit go to revi
 ## Cancel
 
 Set \`cancel\` on the batch. Confirm before discarding answers.
+
+## Keyboard
+
+Arrow keys navigate. Enter continues or submits. Number (or letter) keys pick choices. Hold Command (Meta) or Ctrl to reveal navigation shortcuts as inline \`Kbd\` chips on Previous / Skip / Next / Submit when \`shortcutHints\` is enabled (default).
+
+Set \`focusable\` to gate those shortcuts behind interactive focus: click the Ask card (or any \`focusTriggers\` / \`InteractiveFocusSurface\`) to arm the keyboard. Wrap multiple cards in \`InteractiveFocusProvider\` so shared surfaces pick the highest \`focusPriority\`, and Tab cycles between them. Focused card shells show a subtle ring (\`variant="plain"\` skips the ring).
+
+Set \`shortcuts={false}\` to disable answer keys and hints, or \`shortcutHints={false}\` to keep bindings without the hold-to-reveal chips.
+
+## Toast
+
+Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requires a root \`<Toaster />\` from \`@/components/ui/sonner\`.
 
 ## AI SDK HITL
 
@@ -78,11 +109,18 @@ Set \`cancel\` on the batch. Confirm before discarding answers.
 | \`items\` | \`AskItem[]\` | — | Questions to render, in order. |
 | \`onResult\` | \`(result: AskResult) => void\` | — | HITL-shaped result for \`addToolOutput\`. |
 | \`onSubmit\` | \`(event: FormEvent) => void\` | — | Native form submit. Prefer \`onResult\` for HITL. |
+| \`variant\` | \`"card" \\| "plain"\` | \`"card"\` | Card chrome, or plain bordered answers. |
+| \`toastOnSubmit\` | \`boolean\` | \`false\` | Success toast on submit (needs \`<Toaster />\` from \`sonner\`). |
 | \`review\` | \`boolean\` | \`false\` | Show a review step before submit. |
 | \`cancel\` | \`boolean\` | \`false\` | Show a confirm-to-cancel control. |
 | \`onCancel\` | \`() => void\` | — | Called after cancel is confirmed. |
 | \`autoAdvanceDelay\` | \`number\` | \`380\` | Delay in ms before auto-advance. |
 | \`shortcuts\` | \`"numbers" \\| "letters" \\| false\` | \`"numbers"\` | Answer shortcut keys. |
+| \`shortcutHints\` | \`boolean\` | \`true\` | While Command/Ctrl is held, show inline \`Kbd\` on Previous / Skip / Next / Submit (requires \`shortcuts\` ≠ \`false\`). |
+| \`focusable\` | \`boolean\` | \`false\` | Gate keyboard behind interactive focus; click card / triggers / focus surface to arm. |
+| \`focusPriority\` | \`number\` | \`0\` | Higher wins when several focusable cards share a trigger. |
+| \`focusTriggers\` | \`InteractiveFocusTrigger[]\` | — | Extra click targets that focus this Ask (chat pane, etc.). |
+| \`onFocusChange\` | \`(focused: boolean) => void\` | — | Interactive focus active state. |
 | \`labels\` | \`AskLabels\` | — | Override action and cancel copy. |
 | \`defaultItem\` | \`string\` | first item | Uncontrolled starting question. |
 | \`item\` | \`string\` | — | Controlled active question. |
@@ -97,7 +135,7 @@ Set \`cancel\` on the batch. Confirm before discarding answers.
 | \`title\` | \`string\` | Question title. |
 | \`description\` | \`string\` | Optional supporting copy. |
 | \`required\` | \`boolean\` | Block Next/Submit until answered. |
-| \`choices\` | \`{ value, label }[]\` | Fixed answers. |
+| \`choices\` | \`{ value, label, description? }[]\` | Fixed answers; \`description\` is optional subtext. |
 | \`input\` | \`{ label, placeholder? }\` | Optional Other/freeform answer. |
 | \`multiple\` | \`boolean\` | Checkbox answers. Disables \`autoAdvance\`. |
 | \`autoAdvance\` | \`boolean\` | Advance after a single pick. Not valid with \`multiple\`. |
