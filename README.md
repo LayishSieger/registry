@@ -4,7 +4,7 @@ A [shadcn](https://ui.shadcn.com) registry of composed blocks for **AI agents, b
 
 Opinionated UX on top of shadcn primitives, shaped for [AI SDK](https://ai-sdk.dev) patterns (`useChat`, tool HITL, and related). You copy the source into your project — you own it.
 
-**Docs:** [layish.vercel.app](https://layish.vercel.app)
+**Docs:** [ui.layishsieger.com](https://ui.layishsieger.com)
 
 ## Install
 
@@ -33,8 +33,8 @@ Growing library — current blocks:
 
 | Block | Role |
 | --- | --- |
-| [`composer`](https://layish.vercel.app/docs/components/composer) | Prompt shell (mode / mic / attach slots) for chat input |
-| [`ask`](https://layish.vercel.app/docs/components/ask) | Questionnaire wrap with HITL-shaped results for tool calls |
+| [`composer`](https://ui.layishsieger.com/docs/components/composer) | Prompt shell (mode / mic / attach slots) for chat input |
+| [`ask`](https://ui.layishsieger.com/docs/components/ask) | Questionnaire wrap with HITL-shaped results for tool calls |
 
 More components for agent and chat UIs will land here over time. Full API and demos live on the docs site.
 
@@ -62,6 +62,8 @@ pnpm dev
 ```
 
 Built registry files are written to `public/r`.
+
+Set `NEXT_PUBLIC_SITE_URL=https://ui.layishsieger.com` for canonical absolute URLs (Open Graph, Open in v0). See [`.env.example`](./.env.example).
 
 ## Versioning
 

@@ -14,7 +14,7 @@ export function SiteFooter() {
           >
             shadcn registry
           </Link>
-          . Question Batch wraps{" "}
+          . Ask wraps{" "}
           <Link
             href={siteConfig.links.questionnaire}
             className="underline-offset-4 hover:text-foreground hover:underline"

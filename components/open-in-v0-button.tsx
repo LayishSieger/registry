@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -10,17 +10,39 @@ function buildRegistryItemUrl(base: string, name: string) {
   return `${base.replace(/\/$/, "")}/r/${name}.json`
 }
 
+function shouldUseWindowOrigin(hostname: string) {
+  const isLocal =
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local")
+  // Branch / deployment preview hosts — not the production vercel.app alias.
+  const isPreviewDeployment =
+    hostname.endsWith(".vercel.app") && hostname !== "layish.vercel.app"
+  return isLocal || isPreviewDeployment
+}
+
+function subscribeNoop() {
+  return () => {}
+}
+
 export function OpenInV0Button({
   name,
   className,
 }: { name: string } & React.ComponentProps<typeof Button>) {
-  const [itemUrl, setItemUrl] = useState(() =>
-    buildRegistryItemUrl(getSiteUrl(), name)
+  const hostname = useSyncExternalStore(
+    subscribeNoop,
+    () => window.location.hostname,
+    () => ""
+  )
+  const origin = useSyncExternalStore(
+    subscribeNoop,
+    () => window.location.origin,
+    () => getSiteUrl()
   )
 
-  useEffect(() => {
-    setItemUrl(buildRegistryItemUrl(window.location.origin, name))
-  }, [name])
+  const base =
+    hostname && shouldUseWindowOrigin(hostname) ? origin : getSiteUrl()
+  const itemUrl = buildRegistryItemUrl(base, name)
 
   return (
     <Button
