@@ -33,13 +33,20 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     title: siteConfig.name,
     description: siteConfig.description,
-    // Custom social image deferred — add public/og.png and wire images: [{ url: "/og.png" }]
+    images: [
+      {
+        url: "/og.png",
+        width: 1280,
+        height: 720,
+        alt: "Layish — shadcn registry of composed AI / chat UI blocks",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    // Custom Twitter image deferred with OG — see openGraph note above
+    images: ["/og.png"],
   },
   alternates: {
     canonical: "/",
