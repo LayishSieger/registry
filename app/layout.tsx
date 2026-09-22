@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
-import { siteConfig } from "@/lib/site"
+import { CANONICAL_SITE_URL, siteConfig } from "@/lib/site"
 
 import "./globals.css"
 
@@ -20,11 +20,37 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(CANONICAL_SITE_URL),
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: CANONICAL_SITE_URL,
+    siteName: siteConfig.name,
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: [
+      {
+        url: "/og.png",
+        width: 1280,
+        height: 720,
+        alt: "Layish — shadcn registry of composed AI / chat UI blocks",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: ["/og.png"],
+  },
+  alternates: {
+    canonical: "/",
+  },
 }
 
 export default function RootLayout({
