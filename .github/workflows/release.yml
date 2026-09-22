@@ -42,9 +42,10 @@ jobs:
         uses: changesets/action@v2
         with:
           # private: true + privatePackages.tag → tags only, no npm publish
-          publish: pnpm exec changeset publish
-          title: "Version Packages"
-          commit: "chore: version packages"
-          createGithubReleases: true
+          # changesets/action@v2 renamed camelCase inputs to kebab-case
+          publish-script: pnpm exec changeset publish
+          pr-title: "Version Packages"
+          commit-message: "chore: version packages"
+          create-github-releases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
