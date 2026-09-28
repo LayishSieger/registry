@@ -1,6 +1,9 @@
+export const CANONICAL_SITE_URL = "https://ui.layishsieger.com"
+
 export const siteConfig = {
   name: "Layish",
-  description: "A registry of composed blocks on top of shadcn.",
+  description:
+    "A shadcn registry of composed blocks for AI agents, bots, and chat workflows (Composer, Ask).",
   links: {
     github: "https://github.com/layishsieger/registry",
     shadcn: "https://ui.shadcn.com",
@@ -28,9 +31,17 @@ export function registryInstallCommand(item: string) {
 
 export const installCommand = registryInstallCommand(githubRegistry.item)
 
+/**
+ * Absolute site origin for SSR links (Open in v0, metadataBase).
+ * Prefer NEXT_PUBLIC_SITE_URL (= CANONICAL_SITE_URL in production).
+ * Preview deployments fall back to VERCEL_URL; local uses localhost.
+ */
 export function getSiteUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")
+  }
+  if (process.env.VERCEL_ENV === "production") {
+    return CANONICAL_SITE_URL
   }
   // Preview / production deployment URL when the public site env is unset.
   if (process.env.VERCEL_URL) {
