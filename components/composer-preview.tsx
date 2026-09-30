@@ -76,14 +76,12 @@ function ModeChipTooltip({
   if (!enabled) return children
 
   return (
-    <Tooltip open={open} onOpenChange={setOpen} disableHoverableContent>
+    <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger
-        asChild
+        render={children}
         onPointerDown={() => setOpen(false)}
         onClick={() => setOpen(false)}
-      >
-        {children}
-      </TooltipTrigger>
+      />
       <TooltipContent className="flex items-center gap-2">
         Mode
         <ComposerShortcutKbd
