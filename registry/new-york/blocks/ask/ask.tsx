@@ -912,6 +912,7 @@ function CancelBatchButton({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
+        nativeButton={false}
         render={
           <Button
             type="button"

@@ -62,6 +62,7 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
       />
       <DropdownMenu>
         <DropdownMenuTrigger
+          nativeButton={false}
           render={
             <Button
               variant="secondary"
