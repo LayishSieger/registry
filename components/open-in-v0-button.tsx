@@ -52,6 +52,7 @@ export function OpenInV0Button({
         "shadow-none bg-black text-white hover:bg-black hover:text-white dark:bg-white dark:text-black",
         className
       )}
+      nativeButton={false}
       render={
         <a
           href={`https://v0.dev/chat/api/open?url=${encodeURIComponent(itemUrl)}`}

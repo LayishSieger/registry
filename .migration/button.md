@@ -14,7 +14,7 @@
 
 ## Behavior changes
 
-None flagged for button.
+- Link/`<a>` call sites must pass `nativeButton={false}` with `render` (Base UI default expects a native button).
 
 ## Verify by hand
 

@@ -19,17 +19,22 @@ export default function Home() {
         </p>
         <CopyCommand command={installCommand} className="max-w-xl" />
         <div className="flex flex-wrap items-center gap-2">
-          <Button render={<Link href="/docs/components/composer" />}>
+          <Button
+            nativeButton={false}
+            render={<Link href="/docs/components/composer" />}
+          >
             View Composer
           </Button>
           <Button
             variant="outline"
+            nativeButton={false}
             render={<Link href="/docs/components/ask" />}
           >
             View Ask
           </Button>
           <Button
             variant="outline"
+            nativeButton={false}
             render={
               <Link
                 href={siteConfig.links.shadcnRegistry}
@@ -54,6 +59,7 @@ export default function Home() {
           <Button
             variant="ghost"
             size="sm"
+            nativeButton={false}
             render={<Link href="/docs/components/composer" />}
           >
             Docs
@@ -75,6 +81,7 @@ export default function Home() {
           <Button
             variant="ghost"
             size="sm"
+            nativeButton={false}
             render={<Link href="/docs/components/ask" />}
           >
             Docs

@@ -17,6 +17,7 @@ export function GitHubLink() {
       variant="ghost"
       size="icon-sm"
       className="size-8"
+      nativeButton={false}
       render={
         <Link
           href={siteConfig.links.github}
