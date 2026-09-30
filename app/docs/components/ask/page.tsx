@@ -89,7 +89,7 @@ export default function AskPage() {
           interactiveFocus
           name="ask"
           title="Default"
-          description="Click the preview chrome or the card to focus. Hold ⌘/Ctrl for inline Kbd. Submit shows a toast."
+          description="Click the preview chrome or the card to focus. Hold ⌘/Ctrl for inline Kbd. Preview toasts on submit via host onSubmit."
         >
           <AskDefaultPreview />
         </RegistryExample>
@@ -98,24 +98,26 @@ export default function AskPage() {
           <CopyCommand command={installCommand} />
           <p className="text-sm text-muted-foreground">
             The CLI copies the block into your project. You own the source.
-            Mount a root{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              {"<Toaster />"}
-            </code>{" "}
-            from{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              @/components/ui/sonner
-            </code>{" "}
-            if you enable{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
-              toastOnSubmit
-            </code>
-            .
           </p>
         </section>
         <section className="flex flex-col gap-3">
           <Heading id="usage">Usage</Heading>
           <CodeBlock code={askUsage} />
+          <p className="text-sm text-muted-foreground">
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              onSubmit
+            </code>{" "}
+            is optional and host-owned. It receives the submitted{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              AskResult
+            </code>{" "}
+            and may return a Promise — Submit stays pending until that settles.
+            Ask does not toast or auto-reset; call{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
+              toast
+            </code>{" "}
+            (or remount) from the host if you want that.
+          </p>
           <p className="text-sm text-muted-foreground">
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.8rem]">
               onResult
@@ -222,6 +224,11 @@ export default function AskPage() {
                   <td className="py-2">—</td>
                 </tr>
                 <tr className="border-b">
+                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">onSubmit</td>
+                  <td className="py-2 pr-4 font-mono text-[0.8rem]">(result) =&gt; void | Promise&lt;void&gt;</td>
+                  <td className="py-2">—</td>
+                </tr>
+                <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">onResult</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">(result) =&gt; void</td>
                   <td className="py-2">—</td>
@@ -230,11 +237,6 @@ export default function AskPage() {
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">variant</td>
                   <td className="py-2 pr-4 font-mono text-[0.8rem]">&quot;card&quot; | &quot;plain&quot;</td>
                   <td className="py-2 font-mono text-[0.8rem]">&quot;card&quot;</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">toastOnSubmit</td>
-                  <td className="py-2 pr-4 font-mono text-[0.8rem]">boolean</td>
-                  <td className="py-2 font-mono text-[0.8rem]">false</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-2 pr-4 font-mono text-[0.8rem] text-foreground">review</td>
