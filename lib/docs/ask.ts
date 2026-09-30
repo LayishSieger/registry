@@ -30,7 +30,11 @@ export function Example() {
   return (
     <Ask
       items={items}
-      toastOnSubmit
+      onSubmit={async (result) => {
+        // Host owns post-submit (toast, remount, chat bubble, …).
+        // Return a Promise to keep Submit pending until it settles.
+        await persistAnswers(result)
+      }}
       onResult={(result) => {
         // HITL: addToolOutput({ output: result })
       }}
@@ -54,13 +58,13 @@ The CLI copies the block into your project. You own the source.
 
 This is a GitHub registry, so the CLI reads \`registry.json\` from [${siteConfig.links.github}](${siteConfig.links.github}).
 
-Mount a root \`<Toaster />\` from \`@/components/ui/sonner\` if you enable \`toastOnSubmit\`.
-
 ## Usage
 
 \`\`\`tsx
 ${askUsage}
 \`\`\`
+
+\`onSubmit\` is optional. When provided it receives the submitted \`AskResult\` and may return a Promise — Submit stays disabled until that Promise settles. Ask does not toast, reset, or render a done state; the host decides after submit.
 
 \`onResult\` is the HITL payload. Submit returns \`{ status: "submitted", answers }\`. Cancel returns \`{ status: "canceled" }\`. Pass that object to \`addToolOutput({ output })\`.
 
@@ -92,10 +96,6 @@ Set \`focusable\` to gate those shortcuts behind interactive focus: click the As
 
 Set \`shortcuts={false}\` to disable answer keys and hints, or \`shortcutHints={false}\` to keep bindings without the hold-to-reveal chips.
 
-## Toast
-
-Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requires a root \`<Toaster />\` from \`@/components/ui/sonner\`.
-
 ## AI SDK HITL
 
 \`onResult\` is the tool output. The host passes it to \`addToolOutput\`.
@@ -107,10 +107,9 @@ Set \`toastOnSubmit\` to show a success toast when the batch is submitted. Requi
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | \`items\` | \`AskItem[]\` | — | Questions to render, in order. |
-| \`onResult\` | \`(result: AskResult) => void\` | — | HITL-shaped result for \`addToolOutput\`. |
-| \`onSubmit\` | \`(event: FormEvent) => void\` | — | Native form submit. Prefer \`onResult\` for HITL. |
+| \`onSubmit\` | \`(result: AskResult) => void \\| Promise<void>\` | — | Optional host submit handler. Awaited when async; Submit stays pending until settle. |
+| \`onResult\` | \`(result: AskResult) => void\` | — | HITL-shaped result for \`addToolOutput\` (submit and cancel). |
 | \`variant\` | \`"card" \\| "plain"\` | \`"card"\` | Card chrome, or plain bordered answers. |
-| \`toastOnSubmit\` | \`boolean\` | \`false\` | Success toast on submit (needs \`<Toaster />\` from \`sonner\`). |
 | \`review\` | \`boolean\` | \`false\` | Show a review step before submit. |
 | \`cancel\` | \`boolean\` | \`false\` | Show a confirm-to-cancel control. |
 | \`onCancel\` | \`() => void\` | — | Called after cancel is confirmed. |

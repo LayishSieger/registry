@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import type {
@@ -180,18 +181,26 @@ function summarizeResult(result: AskResult) {
     .join(" · ")
 }
 
+function toastSubmitted(result: AskResult) {
+  if (result.status !== "submitted") return
+  const summary = result.answers
+    .map((answer) => `${answer.title}: ${answer.label}`)
+    .join(" · ")
+  toast.success("Submitted", {
+    description: summary || "Batch submitted.",
+  })
+}
+
 function PreviewBatch({
   items,
   review = false,
   cancel = false,
   variant = "card",
-  toastOnSubmit = true,
 }: {
   items: AskItem[]
   review?: boolean
   cancel?: boolean
   variant?: AskVariant
-  toastOnSubmit?: boolean
 }) {
   const [submitted, setSubmitted] = React.useState<string | null>(null)
 
@@ -213,8 +222,15 @@ function PreviewBatch({
       review={review}
       cancel={cancel}
       variant={variant}
-      toastOnSubmit={toastOnSubmit}
-      onResult={(result) => setSubmitted(summarizeResult(result))}
+      onSubmit={(result) => {
+        toastSubmitted(result)
+        setSubmitted(summarizeResult(result))
+      }}
+      onResult={(result) => {
+        if (result.status === "canceled") {
+          setSubmitted(summarizeResult(result))
+        }
+      }}
     />
   )
 }
@@ -266,8 +282,8 @@ export function AskHitlPreview() {
       focusable
       cancel
       review
-      toastOnSubmit
       items={reviewItems}
+      onSubmit={toastSubmitted}
       onResult={setResult}
     />
   )

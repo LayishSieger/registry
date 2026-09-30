@@ -48,7 +48,6 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
   useInteractiveFocusRegistration,
@@ -156,7 +155,14 @@ export type AskResult =
 export type AskProps = {
   items: AskItem[]
   className?: string
-  onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void
+  /**
+   * Host-owned submit handler. Optional — playground embeds work without it.
+   * Receives the submitted `AskResult`. May return a Promise; while that
+   * Promise is pending, the final Submit action stays disabled.
+   * After settle (resolve or reject), Ask clears pending and leaves
+   * post-submit UI to the host (toast, reset, chat bubble, etc.).
+   */
+  onSubmit?: (result: AskResult) => void | Promise<void>
   /**
    * HITL-shaped result. Pass this straight to `addToolOutput({ output })`.
    * Submit → `{ status: "submitted", answers }`. Cancel → `{ status: "canceled" }`.
@@ -174,12 +180,6 @@ export type AskProps = {
    * (shadcn Questionnaire look).
    */
   variant?: AskVariant
-  /**
-   * Show a success toast when the batch is submitted.
-   * Requires a root `<Toaster />` from `@/components/ui/sonner`.
-   * Default false.
-   */
-  toastOnSubmit?: boolean
   /** Answer shortcut keys on choices. Default `"numbers"`. */
   shortcuts?: "numbers" | "letters" | false
   /**
@@ -967,7 +967,6 @@ export function Ask({
   onCancel,
   autoAdvanceDelay = DEFAULT_AUTO_ADVANCE_DELAY_MS,
   variant = "card",
-  toastOnSubmit = false,
   shortcuts = "numbers",
   shortcutHints = true,
   focusable = false,
@@ -983,6 +982,7 @@ export function Ask({
   const firstName = items[0]?.name ?? ""
   const lastName = items.at(-1)?.name
   const formRef = React.useRef<HTMLFormElement>(null)
+  const [submitting, setSubmitting] = React.useState(false)
   const { focused: interactiveFocused } = useInteractiveFocusRegistration({
     enabled: focusable,
     priority: focusPriority,
@@ -1082,6 +1082,7 @@ export function Ask({
   }
 
   function continueForward() {
+    if (submitting) return
     if (showReviewNext) {
       if (hasAnswer) enterReview()
       return
@@ -1119,10 +1120,10 @@ export function Ask({
     if (phase === "review") {
       if (key === "ArrowLeft") {
         event.preventDefault()
-        leaveReview()
+        if (!submitting) leaveReview()
       } else if (key === "Enter") {
         event.preventDefault()
-        clickSlot(form, "submit")
+        if (!submitting) clickSlot(form, "submit")
       }
       return
     }
@@ -1247,6 +1248,7 @@ export function Ask({
       return
     }
     event.preventDefault()
+    if (submitting) return
     const answers = readAnswers(
       event.currentTarget,
       items,
@@ -1254,16 +1256,23 @@ export function Ask({
       otherDraftsRef.current,
     )
     const result: AskResult = { status: "submitted", answers }
-    if (toastOnSubmit) {
-      const summary = answers
-        .map((answer) => `${answer.title}: ${answer.label}`)
-        .join(" · ")
-      toast.success("Submitted", {
-        description: summary || "Batch submitted.",
-      })
-    }
     onResult?.(result)
-    onSubmit?.(event)
+    const maybePromise = onSubmit?.(result)
+    if (
+      maybePromise != null &&
+      typeof (maybePromise as PromiseLike<void>).then === "function"
+    ) {
+      setSubmitting(true)
+      Promise.resolve(maybePromise).then(
+        () => {
+          setSubmitting(false)
+        },
+        () => {
+          // Host owns error handling inside onSubmit; clear pending only.
+          setSubmitting(false)
+        },
+      )
+    }
   }
 
   const collection = items.map((item) => ({
@@ -1708,6 +1717,7 @@ export function Ask({
                 <Button
                   type="button"
                   variant="outline"
+                  disabled={submitting}
                   className={cn(
                     "col-start-1 row-start-1 justify-self-start",
                     TOUCH_ACTION_CLASS,
@@ -1720,11 +1730,11 @@ export function Ask({
                   />
                   {backLabel}
                 </Button>
-                <QuestionnaireSubmit>
+                <QuestionnaireSubmit disabled={submitting} aria-busy={submitting}>
                   {labels?.submit ?? "Submit"}
                   <ActionShortcutHint
                     shortcut={ASK_SHORTCUTS.submit}
-                    visible={showShortcutHints}
+                    visible={showShortcutHints && !submitting}
                   />
                 </QuestionnaireSubmit>
               </>
@@ -1799,11 +1809,11 @@ export function Ask({
                         />
                       </QuestionnaireNext>
                     )}
-                    <QuestionnaireSubmit>
+                    <QuestionnaireSubmit disabled={submitting} aria-busy={submitting}>
                       {labels?.submit ?? "Submit"}
                       <ActionShortcutHint
                         shortcut={ASK_SHORTCUTS.submit}
-                        visible={showShortcutHints}
+                        visible={showShortcutHints && !submitting}
                       />
                     </QuestionnaireSubmit>
                   </>
