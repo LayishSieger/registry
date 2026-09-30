@@ -61,24 +61,26 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
         className="absolute top-1.5 right-8 z-10 h-5! bg-foreground/10 md:right-7"
       />
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="secondary"
-            size="icon-sm"
-            className="group size-8 px-2 shadow-none md:size-7"
-            aria-label="Copy page options"
-          >
-            <ChevronDownIcon className="transition-transform duration-200 group-data-[state=open]:rotate-180" />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="secondary"
+              size="icon-sm"
+              className="group size-8 px-2 shadow-none md:size-7"
+              aria-label="Copy page options"
+            />
+          }
+        >
+          <ChevronDownIcon className="transition-transform duration-200 group-data-popup-open:rotate-180 group-data-open:rotate-180" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-48">
           <DropdownMenuGroup>
-            <DropdownMenuItem onSelect={() => copyToClipboard(markdown)}>
+            <DropdownMenuItem onClick={() => copyToClipboard(markdown)}>
               <CopyIcon />
               Copy
               <span className="ms-auto text-xs text-muted-foreground">Markdown</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => copyPrompt()}>
+            <DropdownMenuItem onClick={() => copyPrompt()}>
               <SparklesIcon />
               Agent
               <span className="ms-auto text-xs text-muted-foreground">Prompt</span>
