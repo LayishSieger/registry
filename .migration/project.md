@@ -35,3 +35,8 @@ Regenerated `public/r/ask.json`, `public/r/composer.json`, `public/r/registry.js
 ## Build
 
 `tsc --noEmit` and `next build` succeeded after migration.
+
+## Follow-up fixes
+
+- Link Buttons pass `nativeButton={false}`.
+- Popover/Menu triggers that `render` a Base `Button` pass `nativeButton={false}`.
