@@ -67,7 +67,7 @@ export function MobileNav({ className }: { className?: string }) {
         side="bottom"
         sideOffset={12}
         alignOffset={-16}
-        className="h-(--radix-popover-content-available-height) w-screen overflow-y-auto rounded-none border-none bg-background/70 p-0 shadow-none backdrop-blur-xl supports-backdrop-filter:bg-background/55"
+        className="h-(--radix-popover-content-available-height) w-screen overflow-y-auto rounded-none border-none bg-background/55 p-0 shadow-none backdrop-blur-xl supports-backdrop-filter:bg-background/40"
       >
         <div className="flex flex-col gap-8 px-6 py-6">
           <div className="flex flex-col gap-3">
