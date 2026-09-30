@@ -33,17 +33,22 @@ export function SiteHeader() {
             const isActive =
               pathname === item.href || pathname.startsWith(`${item.href}/`)
             return (
-              <Button key={item.href} variant="ghost" size="sm" asChild>
-                <Link
-                  href={item.href}
-                  data-active={isActive}
-                  className={cn(
-                    "text-muted-foreground",
-                    isActive && "bg-accent text-foreground",
-                  )}
-                >
-                  {item.label}
-                </Link>
+              <Button
+                key={item.href}
+                variant="ghost"
+                size="sm"
+                render={
+                  <Link
+                    href={item.href}
+                    data-active={isActive}
+                    className={cn(
+                      "text-muted-foreground",
+                      isActive && "bg-accent text-foreground",
+                    )}
+                  />
+                }
+              >
+                {item.label}
               </Button>
             )
           })}
