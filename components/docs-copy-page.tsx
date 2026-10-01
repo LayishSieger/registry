@@ -50,7 +50,7 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
       <Button
         variant="secondary"
         size="icon-sm"
-        className="size-8 px-2 shadow-none md:size-7"
+        className="size-8 px-2 shadow-none hover:bg-foreground/8 hover:text-foreground md:size-7 dark:hover:bg-foreground/12"
         onClick={() => copyToClipboard(markdown)}
         aria-label={isCopied ? "Copied page" : "Copy page"}
       >
@@ -67,7 +67,7 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
             <Button
               variant="secondary"
               size="icon-sm"
-              className="group size-8 px-2 shadow-none md:size-7"
+              className="group size-8 px-2 shadow-none hover:bg-foreground/8 hover:text-foreground md:size-7 dark:hover:bg-foreground/12"
               aria-label="Copy page options"
             />
           }
