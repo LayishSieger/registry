@@ -199,21 +199,15 @@ function ShortcutTooltip({
   if (!enabled) return children
 
   return (
-    <Tooltip
-      open={open}
-      onOpenChange={setOpen}
-      disableHoverableContent
-    >
+    <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger
-        asChild
+        render={children}
         onPointerDown={() => setOpen(false)}
         onClick={() => setOpen(false)}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") setOpen(false)
         }}
-      >
-        {children}
-      </TooltipTrigger>
+      />
       <TooltipContent className="flex items-center gap-2">
         {label}
         <ComposerShortcutKbd shortcut={shortcut} modKey={modKey} />
@@ -485,7 +479,7 @@ export function Composer({
   )
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider delay={200}>
       <div
         ref={rootRef}
         data-composer-root=""

@@ -19,16 +19,31 @@ export default function Home() {
         </p>
         <CopyCommand command={installCommand} className="max-w-xl" />
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild>
-            <Link href="/docs/components/composer">View Composer</Link>
+          <Button
+            nativeButton={false}
+            render={<Link href="/docs/components/composer" />}
+          >
+            View Composer
           </Button>
-          <Button asChild variant="outline">
-            <Link href="/docs/components/ask">View Ask</Link>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href="/docs/components/ask" />}
+          >
+            View Ask
           </Button>
-          <Button asChild variant="outline">
-            <Link href={siteConfig.links.shadcnRegistry} target="_blank" rel="noreferrer">
-              shadcn registry
-            </Link>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <Link
+                href={siteConfig.links.shadcnRegistry}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+          >
+            shadcn registry
           </Button>
         </div>
       </section>
@@ -41,8 +56,13 @@ export default function Home() {
               becomes stop.
             </p>
           </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/docs/components/composer">Docs</Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/docs/components/composer" />}
+          >
+            Docs
           </Button>
         </div>
         <div className="flex min-h-[280px] items-center justify-center rounded-lg border bg-background p-6">
@@ -58,8 +78,13 @@ export default function Home() {
               answer while typing.
             </p>
           </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/docs/components/ask">Docs</Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/docs/components/ask" />}
+          >
+            Docs
           </Button>
         </div>
         <AskHomePreview />

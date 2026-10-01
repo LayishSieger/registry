@@ -13,15 +13,21 @@ function GitHubIcon() {
 
 export function GitHubLink() {
   return (
-    <Button asChild variant="ghost" size="icon-sm" className="size-8">
-      <Link
-        href={siteConfig.links.github}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="GitHub"
-      >
-        <GitHubIcon />
-      </Link>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="size-8"
+      nativeButton={false}
+      render={
+        <Link
+          href={siteConfig.links.github}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="GitHub"
+        />
+      }
+    >
+      <GitHubIcon />
     </Button>
   )
 }

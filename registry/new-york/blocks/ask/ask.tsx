@@ -911,16 +911,19 @@ function CancelBatchButton({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className={cn("size-11 sm:size-9", className)}
-          aria-label={labels?.cancel ?? "Cancel batch"}
-        >
-          <XIcon />
-        </Button>
+      <PopoverTrigger
+        nativeButton={false}
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className={cn("size-11 sm:size-9", className)}
+            aria-label={labels?.cancel ?? "Cancel batch"}
+          />
+        }
+      >
+        <XIcon />
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} className="w-72">
         <PopoverHeader>
