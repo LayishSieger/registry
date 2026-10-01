@@ -22,9 +22,11 @@ export async function CodeBlock({
         className,
       )}
     >
-      <div className="absolute top-2 right-2 z-10">
-        <CodeCopyButton value={code} label="Copy code" />
-      </div>
+      <CodeCopyButton
+        value={code}
+        label="Copy code"
+        className="absolute top-2 right-2 z-10"
+      />
       <div
         className="overflow-x-auto p-4 font-mono text-[13px] leading-relaxed [&_pre]:m-0 [&_pre]:bg-transparent! [&_pre]:p-0 [&_code]:font-mono"
         dangerouslySetInnerHTML={{ __html: html }}

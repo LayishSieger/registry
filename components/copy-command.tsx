@@ -37,14 +37,18 @@ export function CopyCommand({
     return (
       <div
         className={cn(
-          "flex items-center gap-2 overflow-x-auto rounded-lg border bg-muted/50 px-3 py-2 font-mono text-sm",
+          "relative overflow-x-auto rounded-lg border bg-muted/50 font-mono text-sm",
           className,
         )}
       >
-        <pre className="min-w-0 flex-1 overflow-x-auto">
+        <pre className="min-w-0 overflow-x-auto px-3 py-2 pr-12">
           <code>{command}</code>
         </pre>
-        <CodeCopyButton value={command} label="Copy command" />
+        <CodeCopyButton
+          value={command}
+          label="Copy command"
+          className="absolute top-2 right-2 z-10"
+        />
       </div>
     )
   }
@@ -52,11 +56,11 @@ export function CopyCommand({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border bg-muted/50",
+        "relative overflow-hidden rounded-lg border bg-muted/50",
         className,
       )}
     >
-      <div className="flex items-center gap-2 border-b px-3 py-1.5">
+      <div className="flex items-center gap-2 border-b px-3 py-1.5 pr-12">
         <div
           className="flex size-4 shrink-0 items-center justify-center rounded-[1px] bg-foreground opacity-70"
           aria-hidden
@@ -89,15 +93,15 @@ export function CopyCommand({
             )
           })}
         </div>
-        <CodeCopyButton
-          value={activeCommand}
-          label="Copy command"
-          className="size-7 shrink-0"
-        />
       </div>
       <pre className="overflow-x-auto px-3 py-2.5 font-mono text-sm">
         <code>{activeCommand}</code>
       </pre>
+      <CodeCopyButton
+        value={activeCommand}
+        label="Copy command"
+        className="absolute top-2 right-2 z-10"
+      />
     </div>
   )
 }
