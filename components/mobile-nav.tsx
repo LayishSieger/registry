@@ -98,7 +98,7 @@ export function MobileNav({ className }: { className?: string }) {
             aria-label="Navigation"
             // Full-bleed cover under the sticky header. Close only via X, L, or a nav link —
             // not by tapping the panel itself (matches requested mobile UX).
-            className="fixed inset-x-0 top-(--header-height) bottom-0 z-40 w-screen overflow-y-auto bg-background/90 backdrop-blur lg:hidden"
+            className="fixed inset-x-0 top-(--header-height) bottom-0 z-40 overflow-y-auto bg-background/90 backdrop-blur lg:hidden"
           >
             <div className="flex flex-col gap-8 px-6 py-6">
               <div className="flex flex-col gap-3">
