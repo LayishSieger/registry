@@ -99,7 +99,7 @@ export function MobileNav({ className }: { className?: string }) {
         sideOffset={14}
         alignOffset={-16}
         collisionPadding={0}
-        className="h-(--available-height) w-(--available-width) max-w-none overflow-y-auto rounded-none border-none bg-background/55 p-0 shadow-none ring-0 backdrop-blur-xl duration-100 data-open:animate-none! data-closed:animate-none! supports-backdrop-filter:bg-background/40"
+        className="h-(--available-height) w-(--available-width) max-w-none overflow-y-auto rounded-none border-none bg-background/90 p-0 shadow-none ring-0 backdrop-blur duration-100 data-open:animate-none! data-closed:animate-none!"
       >
         <div className="flex flex-col gap-8 px-6 py-6">
           <div className="flex flex-col gap-3">
