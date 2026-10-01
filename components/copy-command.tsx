@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { TerminalIcon } from "lucide-react"
 
 import { CodeCopyButton } from "@/components/code-copy-button"
 import {
@@ -55,11 +56,17 @@ export function CopyCommand({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2 border-b px-2">
+      <div className="flex items-center gap-2 border-b px-3 py-1.5">
+        <div
+          className="flex size-4 shrink-0 items-center justify-center rounded-[1px] bg-foreground opacity-70"
+          aria-hidden
+        >
+          <TerminalIcon className="size-3 text-background" />
+        </div>
         <div
           role="tablist"
           aria-label="Package manager"
-          className="flex min-w-0 items-center gap-0.5 overflow-x-auto py-1"
+          className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
         >
           {PACKAGE_MANAGERS.map((pm) => {
             const selected = packageManager === pm
@@ -70,9 +77,9 @@ export function CopyCommand({
                 role="tab"
                 aria-selected={selected}
                 className={cn(
-                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  "h-7 rounded-md border border-transparent px-2.5 text-xs font-medium transition-colors shadow-none",
                   selected
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "border-input bg-background text-foreground"
                     : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
                 )}
                 onClick={() => setPackageManager(pm)}
@@ -82,7 +89,11 @@ export function CopyCommand({
             )
           })}
         </div>
-        <CodeCopyButton value={activeCommand} label="Copy command" />
+        <CodeCopyButton
+          value={activeCommand}
+          label="Copy command"
+          className="size-7 shrink-0"
+        />
       </div>
       <pre className="overflow-x-auto px-3 py-2.5 font-mono text-sm">
         <code>{activeCommand}</code>

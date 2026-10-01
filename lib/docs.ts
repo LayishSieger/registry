@@ -28,6 +28,20 @@ export const docsNav: DocsNavSection[] = [
   },
 ]
 
+export const docsPages: DocsNavItem[] = docsNav.flatMap((section) => section.items)
+
+export function getDocsAdjacent(pathname: string): {
+  previous?: DocsNavItem
+  next?: DocsNavItem
+} {
+  const index = docsPages.findIndex((item) => item.href === pathname)
+  if (index === -1) return {}
+  return {
+    previous: docsPages[index - 1],
+    next: docsPages[index + 1],
+  }
+}
+
 export type DocsTocItem = {
   title: string
   url: string
