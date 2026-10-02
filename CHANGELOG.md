@@ -1,5 +1,13 @@
 # registry
 
+## 0.2.1
+
+### Patch Changes
+
+- [#21](https://github.com/LayishSieger/registry/pull/21) [`2008400`](https://github.com/LayishSieger/registry/commit/20084003c3c10e6f0e61e742dc186b3a1908e68f) Thanks [@LayishSieger](https://github.com/LayishSieger)! - Ask: host-owned async `onSubmit(AskResult)`; remove built-in sonner / `toastOnSubmit`.
+  
+  Breaking for consumers who re-run `shadcn add` (overwrites local copies): `onSubmit` now receives `AskResult` (sync or Promise) instead of a form event; `toastOnSubmit` and the `sonner` registry dependency are removed. Toast and post-submit UI belong in the host (docs previews call `toast` from `onSubmit`).
+
 ## 0.2.0
 
 ### Minor Changes
