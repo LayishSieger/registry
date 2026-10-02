@@ -46,19 +46,19 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
   }
 
   return (
-    <div className="relative flex w-fit items-stretch rounded-lg bg-secondary">
+    <div className="group/buttons relative flex items-stretch rounded-lg bg-secondary *:[[data-slot=button]]:focus-visible:relative *:[[data-slot=button]]:focus-visible:z-10">
       <Button
         variant="secondary"
-        size="icon-sm"
-        className="size-8 px-2 shadow-none md:size-7"
+        size="sm"
+        className="h-8 gap-1.5 px-2.5 shadow-none md:h-7 md:text-[0.8rem]"
         onClick={() => copyToClipboard(markdown)}
-        aria-label={isCopied ? "Copied page" : "Copy page"}
       >
         {isCopied ? <CheckIcon /> : <CopyIcon />}
+        Copy Page
       </Button>
       <Separator
         orientation="vertical"
-        className="absolute top-1.5 right-8 z-10 h-5! bg-foreground/10 md:right-7"
+        className="absolute top-1.5 right-8 z-0 h-5! bg-foreground/10 md:right-7"
       />
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -67,24 +67,18 @@ Help me understand how to use it. Be ready to explain concepts, give examples, o
             <Button
               variant="secondary"
               size="icon-sm"
-              className="group size-8 px-2 shadow-none md:size-7"
+              className="peer size-8 shadow-none md:size-7"
               aria-label="Copy page options"
             />
           }
         >
           <ChevronDownIcon className="transition-transform duration-200 group-data-popup-open:rotate-180 group-data-open:rotate-180" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-48">
+        <DropdownMenuContent align="end" className="min-w-48 rounded-lg shadow-none">
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => copyToClipboard(markdown)}>
-              <CopyIcon />
-              Copy
-              <span className="ms-auto text-xs text-muted-foreground">Markdown</span>
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => copyPrompt()}>
               <SparklesIcon />
-              Agent
-              <span className="ms-auto text-xs text-muted-foreground">Prompt</span>
+              Copy prompt
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

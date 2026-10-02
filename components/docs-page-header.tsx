@@ -1,4 +1,5 @@
 import { DocsCopyPage } from "@/components/docs-copy-page"
+import { DocsPager } from "@/components/docs-pager"
 
 export function DocsPageHeader({
   title,
@@ -13,15 +14,16 @@ export function DocsPageHeader({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="scroll-m-24 text-3xl font-semibold tracking-tight">
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="min-w-0 flex-1 scroll-m-24 text-3xl font-semibold tracking-tight">
           {title}
         </h1>
-        {markdown && path ? (
-          <div className="w-fit shrink-0">
+        <div className="ml-auto flex shrink-0 items-center gap-2 pt-1">
+          {markdown && path ? (
             <DocsCopyPage markdown={markdown} path={path} />
-          </div>
-        ) : null}
+          ) : null}
+          <DocsPager />
+        </div>
       </div>
       <p className="max-w-[80%] text-base text-pretty text-muted-foreground">
         {description}
