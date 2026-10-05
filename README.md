@@ -1,8 +1,6 @@
 # Layish
 
-A [shadcn](https://ui.shadcn.com) registry of composed blocks for **AI agents, bots, and chat workflows**.
-
-Opinionated UX on top of shadcn primitives, shaped for [AI SDK](https://ai-sdk.dev) patterns (`useChat`, tool HITL, and related). You copy the source into your project — you own it.
+A [shadcn](https://ui.shadcn.com) registry of **composed UI blocks** you copy into your project and own.
 
 **Docs:** [ui.layishsieger.com](https://ui.layishsieger.com)
 
