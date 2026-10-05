@@ -1,8 +1,6 @@
 # Layish
 
-A [shadcn](https://ui.shadcn.com) registry of composed blocks for **AI agents, bots, and chat workflows**.
-
-Opinionated UX on top of shadcn primitives, shaped for [AI SDK](https://ai-sdk.dev) patterns (`useChat`, tool HITL, and related). You copy the source into your project — you own it.
+A [shadcn](https://ui.shadcn.com) registry of **composed UI blocks** you copy into your project and own.
 
 **Docs:** [ui.layishsieger.com](https://ui.layishsieger.com)
 
@@ -40,18 +38,12 @@ More components for agent and chat UIs will land here over time. Full API and de
 
 ## Scope
 
-**In scope**
-
-- Composed UI blocks for AI / agent / bot / chat surfaces
+- Composed UI blocks for product surfaces (today: AI / agent / bot / chat; the library grows)
 - shadcn registry distribution (`npx shadcn add …`)
 - AI SDK–friendly props and patterns (without hard-requiring the SDK)
 - Slots and host-owned behavior where product choices diverge
 
-**Out of scope**
-
-- Full chat shells, message scrollers, or end-to-end agent runtimes
-- Provider SDKs, billing, or backend orchestration
-- Replacing shadcn primitives — we compose them
+Layish is a UI registry: you copy composed blocks and own them. It is not a provider SDK, billing system, or backend orchestrator — and it composes shadcn primitives rather than replacing them.
 
 ## Development
 
