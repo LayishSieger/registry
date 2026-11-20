@@ -382,44 +382,47 @@ export function Composer({
     submit()
   }
 
+  const onComposerShortcut = React.useEffectEvent((event: KeyboardEvent) => {
+    if (event.defaultPrevented || event.isComposing) return
+    if (!rootRef.current) return
+    const active = document.activeElement
+    const inside = active instanceof Node && rootRef.current.contains(active)
+    if (!inside) return
+
+    if (!isMod(event) || event.altKey) return
+
+    if (event.shiftKey && event.key.toLowerCase() === "a") {
+      event.preventDefault()
+      activateAction("attach")
+      return
+    }
+    if (event.shiftKey && event.key.toLowerCase() === "o") {
+      if (event.repeat) return
+      event.preventDefault()
+      activateAction("mode")
+      return
+    }
+    if (event.shiftKey && event.key.toLowerCase() === "d") {
+      event.preventDefault()
+      activateAction("dictation")
+      return
+    }
+    if (event.key === "Enter") {
+      event.preventDefault()
+      activateAction("send")
+    }
+  })
+
   React.useEffect(() => {
     if (!shortcutsActive) return
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.isComposing) return
-      if (!rootRef.current) return
-      const active = document.activeElement
-      const inside =
-        active instanceof Node && rootRef.current.contains(active)
-      if (!inside) return
-
-      if (!isMod(event) || event.altKey) return
-
-      if (event.shiftKey && event.key.toLowerCase() === "a") {
-        event.preventDefault()
-        activateAction("attach")
-        return
-      }
-      if (event.shiftKey && event.key.toLowerCase() === "o") {
-        if (event.repeat) return
-        event.preventDefault()
-        activateAction("mode")
-        return
-      }
-      if (event.shiftKey && event.key.toLowerCase() === "d") {
-        event.preventDefault()
-        activateAction("dictation")
-        return
-      }
-      if (event.key === "Enter") {
-        event.preventDefault()
-        activateAction("send")
-      }
+    const onKeyDown = (event: KeyboardEvent) => {
+      onComposerShortcut(event)
     }
 
     window.addEventListener("keydown", onKeyDown, true)
     return () => window.removeEventListener("keydown", onKeyDown, true)
-  }, [shortcutsActive, disabled, busy, canSubmit, status])
+  }, [shortcutsActive])
 
   const resolvedMode = resolveSlot(modeSlot, slotProps)
   const resolvedMic =

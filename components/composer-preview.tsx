@@ -69,9 +69,9 @@ function ModeChipTooltip({
   const modKey = useModKey()
   const [open, setOpen] = React.useState(false)
 
-  React.useEffect(() => {
-    if (!enabled) setOpen(false)
-  }, [enabled])
+  if (!enabled && open) {
+    setOpen(false)
+  }
 
   if (!enabled) return children
 
@@ -112,20 +112,20 @@ function ModeSelect({
   )
   const scrollSelectedAfterShortcutRef = React.useRef(false)
 
-  function clearShortcutCollapseTimer() {
+  const clearShortcutCollapseTimer = React.useCallback(() => {
     if (collapseTimerRef.current) {
       clearTimeout(collapseTimerRef.current)
       collapseTimerRef.current = null
     }
-  }
+  }, [])
 
-  function scheduleShortcutCollapse() {
+  const scheduleShortcutCollapse = React.useCallback(() => {
     clearShortcutCollapseTimer()
     collapseTimerRef.current = setTimeout(() => {
       setExpanded(false)
       collapseTimerRef.current = null
     }, 3000)
-  }
+  }, [clearShortcutCollapseTimer])
 
   React.useEffect(() => {
     valueRef.current = value
@@ -141,7 +141,7 @@ function ModeSelect({
 
   React.useEffect(() => {
     return () => clearShortcutCollapseTimer()
-  }, [])
+  }, [clearShortcutCollapseTimer])
 
   React.useEffect(() => {
     if (!expanded) return
@@ -155,7 +155,7 @@ function ModeSelect({
 
     document.addEventListener("pointerdown", onPointerDown)
     return () => document.removeEventListener("pointerdown", onPointerDown)
-  }, [expanded])
+  }, [clearShortcutCollapseTimer, expanded])
 
   React.useEffect(() => {
     const host = rootRef.current?.closest("[data-composer-root]")
@@ -173,14 +173,13 @@ function ModeSelect({
     return () => {
       host.removeEventListener(COMPOSER_MODE_SHORTCUT_EVENT, onModeShortcut)
     }
-  }, [disabled, onValueChange])
+  }, [disabled, onValueChange, scheduleShortcutCollapse])
 
   return (
     <div
       ref={rootRef}
       role="group"
       aria-label="Composer mode"
-      aria-expanded={expanded}
       className={cn(
         "inline-flex min-w-0 max-w-full items-center",
         // Collapsed: no gap — hidden max-w-0 chips must not invent Attach↔Mode space.
@@ -198,6 +197,7 @@ function ModeSelect({
             type="button"
             disabled={disabled}
             aria-pressed={selected}
+            aria-expanded={selected ? expanded : undefined}
             aria-label={selected ? `Mode: ${entry.label}` : entry.label}
             data-composer-action={selected ? "mode" : undefined}
             tabIndex={visible ? 0 : -1}

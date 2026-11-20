@@ -325,11 +325,43 @@ export function useInteractiveFocusRegistration(options: {
     blurEntryRoot(() => options.rootRef.current)
   }, [options.rootRef])
 
+  const [soloListenerKey, setSoloListenerKey] = React.useState({
+    enabled: options.enabled,
+    ctxRegister,
+    priority,
+    id,
+    rootRef: options.rootRef,
+    surface,
+    activate,
+    deactivate,
+  })
+  if (
+    soloListenerKey.enabled !== options.enabled ||
+    soloListenerKey.ctxRegister !== ctxRegister ||
+    soloListenerKey.priority !== priority ||
+    soloListenerKey.id !== id ||
+    soloListenerKey.rootRef !== options.rootRef ||
+    soloListenerKey.surface !== surface ||
+    soloListenerKey.activate !== activate ||
+    soloListenerKey.deactivate !== deactivate
+  ) {
+    setSoloListenerKey({
+      enabled: options.enabled,
+      ctxRegister,
+      priority,
+      id,
+      rootRef: options.rootRef,
+      surface,
+      activate,
+      deactivate,
+    })
+    setSoloFocused(false)
+  }
+
   React.useEffect(() => {
     if (!options.enabled) return
 
     if (!ctxRegister) {
-      setSoloFocused(false)
       const onPointerDown = (event: PointerEvent) => {
         const target = event.target
         const root = options.rootRef.current

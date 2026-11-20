@@ -5,7 +5,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { MicIcon, SquareIcon } from "lucide-react";
 import type { ComponentProps } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -87,6 +93,30 @@ const detectSpeechInputMode = (): SpeechInputMode => {
   return "none";
 };
 
+type RecognitionReadyStore = {
+  ready: boolean;
+  listeners: Set<() => void>;
+};
+
+function createRecognitionReadyStore(): RecognitionReadyStore {
+  return { ready: false, listeners: new Set() };
+}
+
+function subscribeRecognitionReady(
+  store: RecognitionReadyStore,
+  listener: () => void,
+) {
+  store.listeners.add(listener);
+  return () => {
+    store.listeners.delete(listener);
+  };
+}
+
+function publishRecognitionReady(store: RecognitionReadyStore, ready: boolean) {
+  store.ready = ready;
+  for (const listener of store.listeners) listener();
+}
+
 export const SpeechInput = ({
   className,
   onTranscriptionChange,
@@ -97,8 +127,18 @@ export const SpeechInput = ({
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mode] = useState<SpeechInputMode>(detectSpeechInputMode);
-  const [isRecognitionReady, setIsRecognitionReady] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionReadyStore = useRef(createRecognitionReadyStore());
+  const subscribeReady = useCallback(
+    (listener: () => void) =>
+      subscribeRecognitionReady(recognitionReadyStore.current, listener),
+    [],
+  );
+  const isRecognitionReady = useSyncExternalStore(
+    subscribeReady,
+    () => recognitionReadyStore.current.ready,
+    () => false,
+  );
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -108,10 +148,13 @@ export const SpeechInput = ({
   const onAudioRecordedRef =
     useRef<SpeechInputProps["onAudioRecorded"]>(onAudioRecorded);
 
-  onTranscriptionChangeRef.current = onTranscriptionChange;
-  onAudioRecordedRef.current = onAudioRecorded;
+  useEffect(() => {
+    onTranscriptionChangeRef.current = onTranscriptionChange;
+    onAudioRecordedRef.current = onAudioRecorded;
+  }, [onAudioRecorded, onTranscriptionChange]);
 
   useEffect(() => {
+    const readyStore = recognitionReadyStore.current;
     if (mode !== "speech-recognition") {
       return;
     }
@@ -162,7 +205,7 @@ export const SpeechInput = ({
     speechRecognition.addEventListener("error", handleError);
 
     recognitionRef.current = speechRecognition;
-    setIsRecognitionReady(true);
+    publishRecognitionReady(readyStore, true);
 
     return () => {
       speechRecognition.removeEventListener("start", handleStart);
@@ -171,7 +214,7 @@ export const SpeechInput = ({
       speechRecognition.removeEventListener("error", handleError);
       speechRecognition.stop();
       recognitionRef.current = null;
-      setIsRecognitionReady(false);
+      publishRecognitionReady(readyStore, false);
     };
   }, [mode, lang]);
 
