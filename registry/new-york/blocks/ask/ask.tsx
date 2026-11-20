@@ -338,12 +338,15 @@ function moveChoiceFocus(form: HTMLFormElement | null, delta: 1 | -1) {
 
 function useModifierHeld(enabled = true) {
   const [held, setHeld] = React.useState(false)
+  const [wasEnabled, setWasEnabled] = React.useState(enabled)
+
+  if (enabled !== wasEnabled) {
+    setWasEnabled(enabled)
+    if (!enabled) setHeld(false)
+  }
 
   React.useEffect(() => {
-    if (!enabled) {
-      setHeld(false)
-      return
-    }
+    if (!enabled) return
     const sync = (event: KeyboardEvent) => {
       setHeld(event.metaKey || event.ctrlKey)
     }
@@ -1205,27 +1208,6 @@ export function Ask({
     }
   }
 
-  const handleAskKeyDownRef = React.useRef(handleAskKeyDown)
-  handleAskKeyDownRef.current = handleAskKeyDown
-
-  React.useEffect(() => {
-    if (!focusable || !keyboardArmed) return
-    // Capture-phase so ←/→ never hit native radio group navigation.
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key !== "ArrowLeft" &&
-        event.key !== "ArrowRight" &&
-        event.key !== "ArrowUp" &&
-        event.key !== "ArrowDown"
-      ) {
-        return
-      }
-      handleAskKeyDownRef.current(event)
-    }
-    window.addEventListener("keydown", onKeyDown, true)
-    return () => window.removeEventListener("keydown", onKeyDown, true)
-  }, [focusable, keyboardArmed])
-
   function goToNextFrom(fromName: string) {
     if (activeItemRef.current !== fromName) return
     const index = items.findIndex((item) => item.name === fromName)
@@ -1435,6 +1417,28 @@ export function Ask({
     input.setSelectionRange(end, end)
   }
 
+  const onAskArrowKey = React.useEffectEvent((event: KeyboardEvent) => {
+    handleAskKeyDown(event)
+  })
+
+  React.useEffect(() => {
+    if (!focusable || !keyboardArmed) return
+    // Capture-phase so ←/→ never hit native radio group navigation.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key !== "ArrowLeft" &&
+        event.key !== "ArrowRight" &&
+        event.key !== "ArrowUp" &&
+        event.key !== "ArrowDown"
+      ) {
+        return
+      }
+      onAskArrowKey(event)
+    }
+    window.addEventListener("keydown", onKeyDown, true)
+    return () => window.removeEventListener("keydown", onKeyDown, true)
+  }, [focusable, keyboardArmed])
+
   return (
     <Questionnaire
       ref={formRef}
@@ -1453,7 +1457,7 @@ export function Ask({
           event.stopPropagation()
           return
         }
-        handleAskKeyDownRef.current(event)
+        handleAskKeyDown(event)
       }}
       onSubmit={handleSubmit}
     >

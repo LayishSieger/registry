@@ -11,14 +11,18 @@ import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
+function subscribeToNothing() {
+  return () => {}
+}
+
 export function MobileNav({ className }: { className?: string }) {
   const [open, setOpen] = React.useState(false)
-  const [mounted, setMounted] = React.useState(false)
+  const mounted = React.useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  )
   const pathname = usePathname()
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Lock background scroll while the full-bleed menu is open.
   React.useEffect(() => {
