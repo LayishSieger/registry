@@ -1,4 +1,8 @@
-packages: []
+# Do not set `packages`. An empty list makes @manypkg/get-packages treat this
+# as a pnpm workspace with zero packages, so `changeset version` throws
+# "package registry which is not in the workspace" and the Release workflow
+# never opens the Version Packages PR. Omitting the field keeps this a
+# single-package repo (git tags stay `vX.Y.Z`). pnpm still reads allowBuilds.
 
 allowBuilds:
   sharp: true
